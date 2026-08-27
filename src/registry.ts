@@ -3,6 +3,36 @@ import type { DependencyReport, PackageManifest, Packument, VersionPoint } from 
 
 const REGISTRY = "https://registry.npmjs.org";
 
+interface SearchResult {
+  objects?: Array<{ package?: { name?: string } }>;
+}
+
+/**
+ * Avoid issuing a known-404 packument fetch for a typo in the user-facing
+ * search box. Chromium treats that expected response as a console error,
+ * which obscures genuine application failures. Dependency traversal still
+ * uses packuments directly because missing children are intentionally best
+ * effort and must not block a useful report.
+ */
+export async function confirmPublicPackage(name: string, signal?: AbortSignal): Promise<void> {
+  let response: Response;
+  try {
+    response = await fetch(`${REGISTRY}/-/v1/search?text=${encodeURIComponent(name)}&size=250`, {
+      headers: { Accept: "application/json" },
+      signal,
+    });
+  } catch (error) {
+    if (!navigator.onLine) throw new Error("You appear to be offline. Reconnect, then run the analysis again.");
+    if ((error as Error).name === "AbortError") throw error;
+    throw new Error("The npm registry could not be reached. Check your connection and try again.");
+  }
+  if (!response.ok) throw new Error(`The npm registry returned ${response.status}. Wait a moment, then try again.`);
+  const result = await response.json() as SearchResult;
+  if (!result.objects?.some((item) => item.package?.name?.toLowerCase() === name.toLowerCase())) {
+    throw new Error(`npm has no published package named “${name}”. Check the spelling.`);
+  }
+}
+
 export async function fetchPackument(name: string, signal?: AbortSignal): Promise<Packument> {
   let response: Response;
   try {

@@ -31,7 +31,10 @@ describe("static product contract", () => {
     expect(source).not.toContain("selected.length > 8");
     expect(source).toContain("/badge.svg?");
     expect(source).toContain('updateViaCache: "none"');
+    expect(source).toContain("const hadController");
     expect(config).toContain('"/badge.svg"');
+    expect(readFileSync("api/package.json", "utf8")).toContain('"@azure/functions"');
+    expect(readFileSync("api/src/functions/badge.cjs", "utf8")).toContain('app.http("badge"');
     expect(vite).toContain("package-ledger-shell-${buildId}");
   });
 });

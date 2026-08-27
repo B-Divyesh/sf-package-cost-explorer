@@ -11,6 +11,7 @@
     "test:export-scale": "vitest run src/export-scale.test.ts",
     "test:badge": "vitest run src/badge.test.ts",
     "test:pwa-update": "node scripts/pwa-update-check.mjs",
+    "test:live": "node scripts/live-check.mjs",
     "test:watch": "vitest",
     "test:e2e": "playwright test",
     "assets": "node scripts/optimize-assets.mjs"

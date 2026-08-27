@@ -3,7 +3,7 @@ import { downloadPackage } from "./archive";
 import { bundleEntries } from "./bundler";
 import { listPublicEntries } from "./exports-map";
 import { parsePackageSpec, resolveManifest } from "./package-spec";
-import { countDependencies, fetchPackument, versionHistory } from "./registry";
+import { confirmPublicPackage, countDependencies, fetchPackument, versionHistory } from "./registry";
 import type { ArchivePackage, BundleMeasurement, DependencyReport, NamedMeasurement, PackageManifest, Packument, PublicEntry, VersionPoint } from "./types";
 
 const app = document.querySelector<HTMLDivElement>("#app")!;
@@ -168,6 +168,11 @@ async function analyze(raw: string) {
     const controller = new AbortController();
     state.controller = controller;
     results.hidden = true;
+    setStatus("Checking the public package index…", `Confirming ${spec.name} before opening its registry record.`, 5);
+    // npm returns a 404 for an unknown packument, which Chrome reports as a
+    // console resource failure even though it is an expected form error. The
+    // public search index gives us a successful, exact-name check first.
+    await confirmPublicPackage(spec.name, controller.signal);
     setStatus("Opening the registry record…", `Resolving ${spec.name}@${spec.requested} against npm.`, 8);
 
     const packument = await fetchPackument(spec.name, controller.signal);
@@ -309,11 +314,17 @@ function bindResultActions() {
 if ("serviceWorker" in navigator && import.meta.env.PROD) addEventListener("load", () => {
   const toast = document.querySelector<HTMLElement>("#update-toast");
   const showUpdate = () => { if (toast) toast.hidden = false; };
-  navigator.serviceWorker.addEventListener("controllerchange", showUpdate);
+  // The first controllerchange is the initial installation taking control of
+  // this page. It is not an update, so capture whether this document was
+  // already controlled before registration.
+  const hadController = Boolean(navigator.serviceWorker.controller);
+  navigator.serviceWorker.addEventListener("controllerchange", () => {
+    if (hadController) showUpdate();
+  });
   navigator.serviceWorker.register("/sw.js", { updateViaCache: "none" }).then((registration) => {
     registration.addEventListener("updatefound", () => {
       registration.installing?.addEventListener("statechange", () => {
-        if (registration.installing?.state === "installed" && navigator.serviceWorker.controller) showUpdate();
+        if (registration.installing?.state === "installed" && hadController) showUpdate();
       });
     });
   }).catch(() => undefined);

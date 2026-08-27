@@ -1,143 +1,71 @@
-# Package Cost Explorer — verification handoff
+# Package Cost Explorer — repair handoff
 
-## Verification outcome: FAIL
+## Outcome
 
-Independent QA on 2026-08-27 tested candidate
-`4a7f4bff8cdd2e7d15fddbaf634ace67032d6124` against
-<https://package-cost-explorer.sociobot.in>. The detailed evidence is in
-`.factory/verification-2.md`.
-
-All clean-install tests, production build, export-scale test, PWA update/offline
-test, and supplied Playwright suite passed. Independent desktop/390px browser
-checks confirmed real normal/scoped/range/invalid/recovery flows, accessibility,
-privacy, headers, cache policies, and the complete 741-entry `date-fns@4.1.0`
-report (184 seconds; 250 named exports). The live frontend JS matches the
-candidate artifact.
-
-**Acceptance fails because the production `/badge.svg` route returns HTTP 403
-Azure `Web App - Unavailable` HTML instead of the required anonymous
-`image/svg+xml` badge.** The local function unit tests pass, so this is a
-deployment/component availability defect. Do not claim the production v1 is
-complete until the API is deployed and the actual UI-generated badge URL returns
-HTTP 200 SVG.
-
-Minor follow-ups: first-time service-worker install falsely shows an update
-toast, and an expected missing-package npm 404 appears in Chrome's console.
-
-## Run and verify
-
-```sh
-npm ci
-npm test
-npm run test:export-scale
-npm run test:badge
-npm run build
-npx playwright install chromium
-npm run test:pwa-update
-npm run test:e2e
-```
-
-After deployment, run a real package analysis and fetch its generated
-`/badge.svg?...` link; it must return `200` with `content-type: image/svg+xml`.
-
----
-
-# Historical repair handoff
-
-## Delivered 2026-08-27
-
-Repair commit: `3a6057eb9b14e17d3de1128234a2f4ee84514414`.
-
-The application is now deployed to the **Standard-tier Azure Static Web App**
-`sf-package-cost-explorer`:
+The production acceptance failure from `ecb960d372b2a68f7c67847753100f7a48a480b0`
+has been repaired and deployed to the existing **Standard Azure Static Web
+App**. The static app remains a static app; no container deployment was added.
 
 - Production: <https://package-cost-explorer.sociobot.in>
-- Azure hostname: <https://happy-bay-0a03b730f.7.azurestaticapps.net>
-- SKU verified with `az staticwebapp show`: `Standard`.
+- Azure Static Web App: `sf-package-cost-explorer` (Standard)
+- Live UI-generated badge URL verified:
+  <https://package-cost-explorer.sociobot.in/badge.svg?package=nanoid&version=5.1.5&gzip=473>
+  returns **HTTP 200** with `content-type: image/svg+xml; charset=utf-8`.
 
-The obsolete Container Apps/ACR fallback has been removed from this repository;
-there was no host ACR build.
+## What changed
 
-## Repairs
+- Replaced the unavailable legacy Functions metadata path with the supported
+  Azure Functions Node v4 programming model in `api/src/functions/badge.cjs`.
+  The anonymous `badge` function stays attached to the Static Web App under
+  `/api/badge`; `staticwebapp.config.json` continues to rewrite `/badge.svg`
+  to it. `api/package-lock.json` makes the managed API dependency reproducible.
+- Kept the existing safe SVG renderer and its escaping/unit tests. The API has
+  no package lookup or persistence; it only renders values supplied in the
+  badge URL.
+- Fixed the service-worker update signal: a first controller acquisition no
+  longer displays “A new edition is ready”; a real replacement controller
+  still does. The PWA regression uses a new browser context and exercises both
+  cases, then checks offline shell availability.
+- Avoided Chrome’s expected missing-package 404 console error by confirming
+  the exact public package name through npm’s successful search endpoint
+  before requesting its packument. A normal, actionable missing-package error
+  is still shown in the form. Dependency traversal remains best-effort.
+- Added `npm run test:live`, which uses a clean Chromium context against
+  production, asserts no first-install toast, tests missing-package recovery
+  without a 404 console message, runs a real `nanoid@5.1.5` analysis, extracts
+  the page-generated badge URL, and verifies that exact URL is SVG/200.
+- Complete exports and named-export analysis were not capped or changed. The
+  published `date-fns@4.1.0` regression still proves all 741 runtime entries.
 
-- The exports resolver follows browser/import/default runtime conditions
-  correctly, never selects nested `types` declarations, lists every explicit
-  public subpath, and expands pattern exports from the downloaded archive.
-  `date-fns@4.1.0` is regression-tested against npm at exactly **741** concrete
-  public entries, including `./add → ./add.js`.
-- The analysis workflow measures every public entry rather than sampling four;
-  it also rebuilds every statically discoverable named export rather than
-  limiting the report to ten. Reruns merge into the complete report instead of
-  replacing it. Large packages can take noticeably longer, and progress names
-  the current entry truthfully.
-- `/badge.svg?package=…&version=…&gzip=…` is an anonymous Azure Functions
-  worker route behind Static Web Apps. It returns an escaped, self-contained
-  `image/svg+xml` badge suitable for `<img>` embedding. The UI copies a stable
-  embed snippet and exposes the SVG URL. The URL carries the local measurement;
-  it does not send a package lookup to an application server.
-- Vite now emits a build-revisioned `sw.js` cache name and a versioned PWA
-  start URL. It precaches the complete initial shell, uses network-first
-  navigation (offline falls back to the cached shell), runs `skipWaiting` and
-  `clientsClaim`, bypasses the HTTP cache for worker update checks, and exposes
-  a reload toast when an update takes control.
-- Dependency footprint now includes optional dependencies and labels a
-  cap-truncated total as a minimum. CSP now disallows framing and the Static
-  Web Apps headers include `X-Frame-Options: DENY`.
+## Verification run
 
-## Run and verify
-
-```sh
-npm ci
-npm test
-npm run test:export-scale
-npm run test:badge
-npm run build
-npx playwright install chromium
-npm run test:e2e
-npm run test:pwa-update
-```
-
-The app build is `dist/`; the badge worker source is `api/`. Deploy with the
-Azure Static Web Apps CLI using the production deployment token and both
-locations (the deployment already completed for this handoff):
+From a clean dependency installation (`npm ci`; no production audit
+vulnerabilities):
 
 ```sh
-swa deploy dist --api-location api --api-language node --api-version 20 --env production
+npm test                         # 7 files, 23 tests passed
+npm run test:badge               # 2 SVG safety tests passed
+npm run test:export-scale        # date-fns@4.1.0: 741 entries passed
+npm run build                    # dist/ generated
+npm run test:pwa-update          # first install, update, and offline passed
+npm run test:e2e                 # 4 passed; 2 intentional project skips
+npm run test:live                # live clean-profile + generated badge passed
 ```
 
-## Verification completed
+The production deployment was made with the Static Web Apps CLI using both
+`dist/` and `api/` (`--api-language node --api-version 20 --env production`).
+The app bundle remains below the static first-load budget: initial JS is about
+145 kB uncompressed (about 48 kB gzip) and CSS is 13.0 kB (3.7 kB gzip); the
+large bundler/compression WASM files remain analysis-time loads.
 
-- Clean `npm ci`: passed; `npm audit`: **0 vulnerabilities**.
-- `npm test`: **7 files, 22 tests passed**. This includes the real
-  `date-fns@4.1.0` 741-export regression, archive pattern expansion,
-  no-`types` runtime resolution, optional dependency accounting, generated
-  worker badge safety, and product-contract checks.
-- `npm run test:export-scale`: passed (published `date-fns@4.1.0`, 741).
-- `npm run test:badge`: passed (2 worker SVG/escaping tests).
-- `npm run build`: passed and produced `dist/` with generated revisioned
-  `sw.js` and versioned manifest. Initial JavaScript is about 138 kB
-  uncompressed / 45 kB gzip; CSS is 13.0 kB / 3.7 kB gzip. esbuild/Brotli WASM
-  remains lazy after a user starts analysis.
-- `npm run test:pwa-update`: passed. It creates two ordinary app-only builds,
-  registers the first, serves the second without a special worker edit,
-  reloads into the new shell, then confirms the updated shell offline.
-- `npm run test:e2e`: **4 passed, 2 mobile/desktop duplicate workflow skips**;
-  includes axe serious/critical coverage, keyboard skip link, responsive legal
-  page, and a real npm/tarball/esbuild `nanoid@5.1.5` analysis.
-- Live production check: HTTP 200 home, generated worker SVG 200 for
-  `date-fns@4.1.0&gzip=1536`, `sw.js` is `no-cache, no-store`, frame protection
-  is present, and a live Playwright analysis of `nanoid@5.1.5` rendered three
-  rows and a 200 SVG badge. Live axe had **0** serious/critical issues, one
-  `<h1>`, one `<main>`, and no console errors.
+## Known limits / next steps
 
-## Known limits
-
-- Bundle totals are browser/esbuild estimates; peer dependencies, Node
-  built-ins, CSS, static assets, and native modules are disclosed rather than
-  silently included.
-- Full reports for packages with hundreds of entry or named exports are
-  deliberately complete and may take time or meet the existing 50 MB download
-  safety ceiling. The UI reports this rather than sampling a misleading subset.
-- Registry and tarball requests still go directly from the visitor to npm, as
-  described in `/privacy`; the badge worker only renders the figures supplied
-  in its URL and keeps no data.
+- Measurements remain browser/esbuild estimates. Peer dependencies, Node
+  built-ins, CSS, static assets, native modules, and application-specific
+  shared dependencies are disclosed rather than silently included.
+- Very large public export maps are deliberately complete and can take time;
+  the existing 50 MB download and 400 dependency-traversal safety limits still
+  apply and are communicated in the UI.
+- The npm search confirmation is intentionally only for the user-entered
+  package. It prevents expected typo noise without making dependency walking
+  slower or less resilient.

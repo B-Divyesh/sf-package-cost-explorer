@@ -44,12 +44,14 @@ try {
   const page = await context.newPage();
   await page.goto(origin);
   await page.evaluate(() => navigator.serviceWorker.ready);
+  if (await page.locator("#update-toast").isVisible()) throw new Error("a clean first install incorrectly announced an update");
   await page.reload();
   if (await page.locator('meta[name="app-build"]').getAttribute("content") !== "pwa-first") throw new Error("first PWA shell did not load");
 
   activeDirectory = build("pwa-second");
   await page.evaluate(async () => (await navigator.serviceWorker.getRegistration())?.update());
   await page.waitForFunction(async () => caches.has("package-ledger-shell-pwa-second"));
+  await page.locator("#update-toast").waitFor({ state: "visible", timeout: 10_000 });
   await page.reload();
   if (await page.locator('meta[name="app-build"]').getAttribute("content") !== "pwa-second") throw new Error("ordinary app deployment retained the stale shell");
 
