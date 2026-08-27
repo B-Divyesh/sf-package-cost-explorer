@@ -1,0 +1,7 @@
+{
+  "use_case": "stylized-concept",
+  "asset_type": "wide landing page hero illustration",
+  "date": "2026-08-27",
+  "generator": "Azure OpenAI factory-image via /opt/fleet/lib/gen-image.sh",
+  "prompt": "Wide editorial still life for a developer tool landing page. Flat overhead view of an abstract opened software package archive made from layered, torn warm newsprint and matte carbon-black paper. From the package, several precise branching paths in restrained deep cyan ink lead to differently sized circular halftone nodes, visually explaining subpath exports and a dependency tree. Printmaker's workbench, screenprinted technical broadsheet aesthetic, coarse halftone dots, registration marks without characters, hard paper shadows, asymmetric wide composition, high contrast, warm newsprint carbon black and one cyan spot color only. No text, no letters, no numbers, no logos, no brands, no people, no code screenshots, no gradients, no glossy 3D, no neon, no watermark."
+}

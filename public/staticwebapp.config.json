@@ -1,0 +1,13 @@
+{
+  "navigationFallback": { "rewrite": "/index.html", "exclude": ["/assets/*", "/*.svg", "/*.wasm", "/*.webmanifest"] },
+  "globalHeaders": {
+    "X-Content-Type-Options": "nosniff",
+    "Referrer-Policy": "strict-origin-when-cross-origin",
+    "Permissions-Policy": "camera=(), microphone=(), geolocation=()",
+    "Content-Security-Policy": "default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; style-src 'self'; img-src 'self' data:; connect-src 'self' https://registry.npmjs.org https://*.npmjs.org; worker-src 'self' blob:; object-src 'none'; base-uri 'self'; form-action 'self'"
+  },
+  "routes": [
+    {"route":"/assets/*","headers":{"cache-control":"public, max-age=31536000, immutable"}},
+    {"route":"/*.wasm","headers":{"cache-control":"public, max-age=31536000, immutable"}}
+  ]
+}

@@ -1,0 +1,10 @@
+{
+  "name": "Package Cost Explorer",
+  "short_name": "Pkg Ledger",
+  "description": "A private, exports-aware npm package cost ledger.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#f1efe8",
+  "theme_color": "#f1efe8",
+  "icons": [{"src":"/favicon.svg","sizes":"any","type":"image/svg+xml","purpose":"any"}]
+}
