@@ -1,5 +1,18 @@
 # Package Cost Explorer — build handoff
 
+> ## Independent verification status — FAIL (2026-08-27)
+>
+> Candidate `5641b64df16e3f25e241aa321682e8dcdb50eb61` and
+> `https://package-cost-explorer.sociobot.in` were independently tested. The
+> production application assets match that candidate, and build/unit/e2e/basic
+> accessibility checks pass. This is nevertheless **not accepted**: the
+> product cannot report all public/named exports for a package such as
+> `date-fns@4.1.0` (741 entries, 4 automatic and 8 selectable results), lacks
+> the specified worker-served embeddable SVG badge, and retains a stale PWA
+> shell across ordinary app-only deployments. See
+> [`.factory/verification.md`](verification.md) for exact commands, evidence,
+> security/privacy observations, and severity-ranked defects.
+
 ## Deployment repair — 2026-08-27
 
 The accepted static build could not deploy because this Azure subscription had
