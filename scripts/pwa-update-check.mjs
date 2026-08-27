@@ -49,7 +49,7 @@ try {
 
   activeDirectory = build("pwa-second");
   await page.evaluate(async () => (await navigator.serviceWorker.getRegistration())?.update());
-  await page.waitForFunction(() => navigator.serviceWorker.controller?.scriptURL.endsWith("/sw.js"));
+  await page.waitForFunction(async () => caches.has("package-ledger-shell-pwa-second"));
   await page.reload();
   if (await page.locator('meta[name="app-build"]').getAttribute("content") !== "pwa-second") throw new Error("ordinary app deployment retained the stale shell");
 
