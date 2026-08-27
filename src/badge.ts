@@ -26,9 +26,8 @@ export function badgeLabel(values: BadgeValues): string {
 }
 
 /**
- * This is intentionally a real static URL. Azure Static Web Apps serves the
- * checked-in SVG directly, including when it has the informational query
- * values used by the report. It is safe to fetch or link in every SWA tier.
+ * This is the public worker route. Azure Static Web Apps rewrites it to a
+ * tiny renderer that strictly escapes these report values before returning SVG.
  */
 export function badgeUrl(origin: string, values: BadgeValues): string {
   const params = new URLSearchParams({

@@ -1,5 +1,27 @@
 import { defineConfig, type Plugin, type ResolvedConfig } from "vite";
 import { writeFileSync } from "node:fs";
+import { createRequire } from "node:module";
+import type { IncomingMessage, ServerResponse } from "node:http";
+
+const require = createRequire(import.meta.url);
+const { response: badgeResponse } = require("./api/badge/index.cjs") as {
+  response(query: Record<string, string>): { status: number; headers: Record<string, string>; body: string };
+};
+
+function badgeMiddleware(request: IncomingMessage, response: ServerResponse) {
+  const query = Object.fromEntries(new URL(request.url || "/badge.svg", "http://localhost").searchParams.entries());
+  const badge = badgeResponse(query);
+  response.writeHead(badge.status, badge.headers);
+  response.end(badge.body);
+}
+
+function localBadgeWorker(): Plugin {
+  return {
+    name: "local-badge-worker",
+    configureServer(server) { server.middlewares.use("/badge.svg", badgeMiddleware); },
+    configurePreviewServer(server) { server.middlewares.use("/badge.svg", badgeMiddleware); },
+  };
+}
 
 function versionedServiceWorker(buildId: string): Plugin {
   let config: ResolvedConfig;
@@ -76,6 +98,6 @@ export default defineConfig(() => {
       "Cross-Origin-Embedder-Policy": "credentialless",
     },
   },
-  plugins: [versionedServiceWorker(buildId)],
+  plugins: [localBadgeWorker(), versionedServiceWorker(buildId)],
 };
 });

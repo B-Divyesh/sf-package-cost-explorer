@@ -27,8 +27,15 @@ test("a real npm package produces a complete local report", async ({ page }, tes
   expect(badge.headers()["content-type"]).toContain("image/svg+xml");
   const svg = await badge.text();
   expect(svg).toContain('role="img"');
-  expect(svg).toContain("Package Cost Explorer");
+  expect(svg).toContain("nanoid@5.1.5");
+  expect(svg).toMatch(/\d+ B gzip/);
   expect(svg).not.toMatch(/<script|onload\s*=/i);
+  const hostile = await page.request.get("/badge.svg?package=%3Cscript%3Ealert(1)%3C%2Fscript%3E&version=%22%20onload%3D%22alert(1)&gzip=1e9");
+  const hostileSvg = await hostile.text();
+  expect(hostile.status()).toBe(200);
+  expect(hostileSvg).toContain("&lt;script&gt;");
+  expect(hostileSvg).toContain("size unavailable");
+  expect(hostileSvg).not.toMatch(/<script\b|onload\s*=/i);
 });
 
 test("mobile page does not overflow and legal routes render one heading", async ({ page }, testInfo) => {

@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { badgeDataUrl, badgeLabel, badgeUrl, renderBadgeSvg } from "./badge";
 
 describe("embeddable badge data", () => {
-  it("creates a static live route with the report values and a self-contained SVG embed", () => {
+  it("creates a per-report live route and a self-contained SVG embed", () => {
     const values = { packageName: "date-fns", version: "4.1.0", gzip: 1536 };
     expect(badgeUrl("https://package-cost-explorer.sociobot.in", values)).toBe("https://package-cost-explorer.sociobot.in/badge.svg?package=date-fns&version=4.1.0&gzip=1536");
     expect(renderBadgeSvg(values)).toContain("date-fns@4.1.0");

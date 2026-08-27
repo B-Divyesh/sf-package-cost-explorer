@@ -24,7 +24,7 @@ describe("static product contract", () => {
     expect(css).toContain(":focus-visible");
     expect(css).toContain("prefers-reduced-motion: reduce");
   });
-  it("ships an unbounded export report, static badge route, and update-aware service worker registration", () => {
+  it("ships an unbounded export report, query-aware badge route, manifest MIME, and update-aware service worker registration", () => {
     const config = readFileSync("public/staticwebapp.config.json", "utf8");
     const vite = readFileSync("vite.config.ts", "utf8");
     expect(source).not.toContain("entries.slice(0, 4)");
@@ -33,8 +33,11 @@ describe("static product contract", () => {
     expect(source).toContain('updateViaCache: "none"');
     expect(source).toContain("const hadController");
     expect(config).toContain('"/badge.svg"');
-    expect(config).not.toContain('"rewrite":"/api/badge"');
-    expect(readFileSync("public/badge.svg", "utf8")).toContain('role="img"');
+    expect(config).toContain('"rewrite":"/api/badge"');
+    expect(config).toContain('".webmanifest": "application/manifest+json"');
+    expect(readFileSync("api/src/functions/badge.cjs", "utf8")).toContain('app.http("badge"');
+    expect(readFileSync("api/badge/contract.cjs", "utf8")).toContain("assert.notEqual(measured.body, other.body)");
     expect(vite).toContain("package-ledger-shell-${buildId}");
+    expect(vite).toContain("local-badge-worker");
   });
 });

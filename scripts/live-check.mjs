@@ -37,10 +37,19 @@ try {
   const badge = await fetch(badgeUrl);
   const type = badge.headers.get("content-type") || "";
   const body = await badge.text();
-  if (badge.status !== 200 || !type.includes("image/svg+xml") || !body.startsWith("<?xml") || !body.includes('role="img"') || /<script|onload\s*=/i.test(body)) {
+  if (badge.status !== 200 || !type.includes("image/svg+xml") || !body.startsWith("<?xml") || !body.includes('role="img"') || !body.includes("nanoid@5.1.5") || !/\d+ B gzip/.test(body) || /<script\b|onload\s*=/i.test(body)) {
     throw new Error(`live badge failed: ${badge.status} ${type}`);
   }
-  console.log(`Live clean-profile, missing-package, and safe static UI-generated badge checks passed: ${badgeUrl}`);
+  const distinct = await fetch(`${origin}/badge.svg?package=date-fns&version=4.1.0&gzip=999999`);
+  const distinctBody = await distinct.text();
+  if (distinct.status !== 200 || !distinct.headers.get("content-type")?.includes("image/svg+xml") || !distinctBody.includes("date-fns@4.1.0") || distinctBody === body) {
+    throw new Error("live badge is not a distinct per-report SVG");
+  }
+  const manifest = await fetch(`${origin}/manifest.webmanifest`);
+  if (!manifest.headers.get("content-type")?.includes("application/manifest+json")) {
+    throw new Error(`live manifest MIME is ${manifest.headers.get("content-type")}`);
+  }
+  console.log(`Live clean-profile, missing-package, per-report badge, and manifest MIME checks passed: ${badgeUrl}`);
   await context.close();
 } finally {
   await browser.close();
