@@ -65,6 +65,12 @@ In `/tmp/package-cost-explorer-verify` at the exact detached SHA:
   immutable caching; HTML and `sw.js` are revalidated after 30 seconds.
   There is no `frame-ancestors` CSP directive or `X-Frame-Options`, so the page
   remains frameable.
+- PWA offline reload: after first registration, an offline reload of the live
+  site rendered its H1 successfully (the immutable browser cache supplied the
+  app modules). A clean candidate `vite preview` context instead received the
+  cached HTML as the missing module response and failed MIME checking. The
+  live behavior is usable, but the worker itself is not a complete shell
+  precache and should not be relied on as the offline guarantee.
 
 ## Defects
 
