@@ -1,12 +1,15 @@
 {
-  "navigationFallback": { "rewrite": "/index.html", "exclude": ["/assets/*", "/*.svg", "/*.wasm", "/*.webmanifest", "/*.txt", "/*.xml"] },
+  "navigationFallback": { "rewrite": "/index.html", "exclude": ["/api/*", "/assets/*", "/badge.svg", "/*.svg", "/*.wasm", "/*.webmanifest", "/*.txt", "/*.xml"] },
   "globalHeaders": {
     "X-Content-Type-Options": "nosniff",
     "Referrer-Policy": "strict-origin-when-cross-origin",
     "Permissions-Policy": "camera=(), microphone=(), geolocation=()",
-    "Content-Security-Policy": "default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; style-src 'self'; img-src 'self' data:; connect-src 'self' https://registry.npmjs.org https://*.npmjs.org; worker-src 'self' blob:; object-src 'none'; base-uri 'self'; form-action 'self'"
+    "Content-Security-Policy": "default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; style-src 'self'; img-src 'self' data:; connect-src 'self' https://registry.npmjs.org https://*.npmjs.org; worker-src 'self' blob:; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'",
+    "X-Frame-Options": "DENY"
   },
   "routes": [
+    {"route":"/badge.svg","rewrite":"/api/badge"},
+    {"route":"/sw.js","headers":{"cache-control":"no-cache, no-store, must-revalidate"}},
     {"route":"/assets/*","headers":{"cache-control":"public, max-age=31536000, immutable"}},
     {"route":"/*.wasm","headers":{"cache-control":"public, max-age=31536000, immutable"}}
   ]

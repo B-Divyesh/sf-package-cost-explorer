@@ -263,7 +263,9 @@ export async function bundleEntries(
 
   const named: NamedMeasurement[] = [];
   const primary = measurements[0];
-  const names = (primary?.exports || []).filter((name) => name !== "default" && name !== "__package" && /^[A-Za-z_$][\w$]*$/.test(name)).slice(0, 10);
+  // The export list is the report contract, not a sample. Packages such as
+  // date-fns expose hundreds of names, and each gets its own isolated build.
+  const names = (primary?.exports || []).filter((name) => name !== "default" && name !== "__package" && /^[A-Za-z_$][\w$]*$/.test(name));
   for (const name of names) {
     const result = await bundleOnce(root, primary!.entry, store, name);
     named.push({ name, minified: result.bytes.length, gzip: gzipSync(result.bytes, { level: 9 }).length });

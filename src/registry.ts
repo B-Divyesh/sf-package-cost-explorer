@@ -48,7 +48,12 @@ export async function countDependencies(
   onProgress: (count: number) => void,
   cap = 400,
 ): Promise<DependencyReport> {
-  const direct: Array<{ name: string; range: string; version?: string }> = Object.entries(root.dependencies || {}).map(([name, range]) => ({ name, range }));
+  // Optional packages are commonly installed and can materially change the
+  // footprint. Prefer a regular dependency range if both declarations exist.
+  const direct: Array<{ name: string; range: string; version?: string }> = Object.entries({
+    ...(root.optionalDependencies || {}),
+    ...(root.dependencies || {}),
+  }).map(([name, range]) => ({ name, range }));
   const queue = direct.map((item) => ({ ...item }));
   const seen = new Set<string>();
   const packuments = new Map<string, Promise<Packument>>();
@@ -79,7 +84,7 @@ export async function countDependencies(
         const directItem = direct.find((candidate) => candidate.name === item.name && candidate.range === item.range);
         if (directItem) directItem.version = version;
         const manifest = packument.versions[version];
-        Object.entries(manifest?.dependencies || {}).forEach(([name, range]) => queue.push({ name, range }));
+        Object.entries({ ...(manifest?.optionalDependencies || {}), ...(manifest?.dependencies || {}) }).forEach(([name, range]) => queue.push({ name, range }));
       } catch {
         // A deprecated or private child must not prevent the useful aggregate.
       }

@@ -4,11 +4,12 @@ Package Cost Explorer is an exports-aware npm package cost ledger for frontend a
 
 - aggregate unpacked install footprint and root-package size;
 - unique production dependencies, with direct-version resolution;
-- every non-pattern public subpath in the package's `exports` map;
-- minified, gzip, and Brotli JavaScript cost for selected entries;
-- isolated tree-shaken cost for up to ten named exports;
+- every concrete public subpath in the package's `exports` map (including
+  archive-expanded pattern exports);
+- minified, gzip, and Brotli JavaScript cost for every public entry;
+- isolated tree-shaken cost for every statically discoverable named export;
 - recent version-over-version unpacked-size history;
-- a canonical share URL and downloadable, self-contained SVG badge.
+- a canonical share URL and worker-served embeddable SVG badge.
 
 All analysis runs in the browser. The app talks directly to the public npm registry, opens tarballs in memory, and loads esbuild-wasm only when an analysis begins. There is no lookup API, account, analytics, or package-query storage.
 
@@ -47,18 +48,15 @@ Playwright needs its browser once per machine: `npx playwright install chromium`
 
 The app requests compact package metadata from npm, resolves the requested tag/range, and downloads the chosen package tarball. Its complete `package.json` is read from the archive so `exports`, `browser`, `module`, and `main` stay authoritative. esbuild-wasm bundles selected entry points for an ES2020 browser target with tree-shaking and minification. Compression runs locally with fflate (gzip) and Brotli WASM. Production dependency counts are resolved recursively from registry metadata and deduplicated by name and version.
 
-Peer dependencies and Node built-ins remain external and are named in the report. CSS, static assets, optional/native modules, wildcard exports, and side-effect analysis are outside v1. Total tarball downloads during one bundle run are capped at 50 MB; dependency counting is capped at 400 unique packages. These limits are surfaced in the interface.
+Peer dependencies and Node built-ins remain external and are named in the report. CSS, static assets, optional/native modules, and side-effect analysis are outside v1. Pattern exports are expanded from the downloaded archive. Total tarball downloads during one bundle run are capped at 50 MB; dependency counting is capped at 400 unique packages. These limits are surfaced in the interface.
 
 ## Deploy
 
-The production path is a container that builds the existing `dist/` artifact and serves it on port 8080 as the non-root `nginx` user:
-
-```sh
-docker build -t package-cost-explorer .
-docker run --rm -p 8080:8080 package-cost-explorer
-```
-
-The container keeps HTML uncached, safely caches content-hashed Vite assets for one year, gives public un-hashed assets a one-day cache, preserves the service worker update path, applies the existing CSP/security policy, and falls back to `index.html` for client routes such as `/privacy` and `/terms`. `public/staticwebapp.config.json` remains for compatibility with the original static-host artifact. Factory infrastructure performs the production container deployment.
+Production is the Standard-tier Azure Static Web App `sf-package-cost-explorer`.
+Deploy `dist/` with the adjacent `api/` Azure Functions worker; the checked-in
+Static Web Apps configuration routes `/badge.svg` to that worker and applies
+the production security/cache policy. There is intentionally no container
+fallback or ACR build path.
 
 ## Privacy and license
 

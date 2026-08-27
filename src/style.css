@@ -59,6 +59,8 @@ input[type="text"], .search-row input { min-width: 0; min-height: 56px; padding:
 .hero-art img { min-height: 590px; object-fit: cover; filter: contrast(1.04) saturate(.85); }
 .hero-art figcaption { position: absolute; right: 0; bottom: 0; max-width: 310px; padding: 12px 16px; background: var(--ink); color: white; font-family: Georgia, serif; font-size: 14px; }
 .offline-banner { padding: 14px clamp(20px, 5vw, 72px); border-bottom: 2px solid var(--ink); background: #f3dfac; color: #4f3500; }
+.update-toast { position: fixed; z-index: 8; right: 16px; bottom: 16px; display: flex; align-items: center; gap: 12px; max-width: min(440px, calc(100vw - 32px)); padding: 10px 10px 10px 16px; border: 2px solid var(--ink); background: var(--pale-cyan); box-shadow: 4px 4px 0 var(--ink); font-weight: 700; }
+.update-toast .quiet-button { min-height: 40px; background: var(--sheet); }
 .analysis-status { position: relative; display: grid; grid-template-columns: 1fr auto; gap: 20px; padding: 28px clamp(20px, 5vw, 72px) 30px; border-bottom: 2px solid var(--ink); background: var(--pale-cyan); }
 .analysis-status[hidden], .results[hidden], [hidden] { display: none !important; }
 .analysis-status h2 { font-size: clamp(28px, 3vw, 42px); }
@@ -118,6 +120,7 @@ thead th { color: var(--muted); font-size: 11px; letter-spacing: .1em; text-tran
 .share-actions { display: flex; flex-wrap: wrap; justify-content: end; gap: 12px; }
 .share-desk .secondary-button { border-color: white; }
 .share-desk .quiet-button { border-color: white; color: white; }
+.share-desk .badge-link { display: inline-flex; align-items: center; min-height: 44px; text-decoration: none; }
 #copy-status { flex-basis: 100%; min-height: 22px; text-align: right; color: #a5d4d3; }
 .method-note { padding: 18px clamp(20px, 5vw, 72px); border-bottom: 2px solid var(--ink); background: #e4e0d5; color: var(--muted); font-size: 13px; }
 .method { padding: 60px clamp(20px, 5vw, 72px); border-bottom: 4px double var(--ink); }

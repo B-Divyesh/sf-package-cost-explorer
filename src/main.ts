@@ -35,7 +35,7 @@ function renderLegal(kind: "privacy" | "terms") {
     <h1>${privacy ? "Privacy, in plain ink." : "Terms of use."}</h1>
     ${privacy ? `<p class="lede">Package Cost Explorer performs analysis on your device. We do not operate an analysis API, create user accounts, or collect package lookups.</p>
       <h2>Data the app handles</h2><p>The package query in a shared URL is visible in that URL. The app fetches public metadata and tarballs directly from the npm registry. Those requests are governed by npm’s own network logs and privacy terms.</p>
-      <h2>Storage</h2><p>A service worker caches static application files on your device for faster and offline shell loading. Analysis results and package contents are kept in memory and disappear when the page is closed or refreshed. We set no tracking cookies and use no analytics.</p>
+      <h2>Storage</h2><p>A service worker caches the versioned application shell on your device for faster and offline shell loading. Analysis results and package contents are kept in memory and disappear when the page is closed or refreshed. We set no tracking cookies and use no analytics.</p>
       <h2>Your control</h2><p>Clear this site’s storage in your browser to remove the cached shell. Avoid sharing a result URL if you do not want its public package name and version included.</p>`
     : `<p class="lede">This free tool provides reproducible estimates for dependency decisions. Use it as one input, then validate critical choices in your own build.</p>
       <h2>What the measurement means</h2><p>Bundle figures are generated in your browser with esbuild, browser/import export conditions, minification, and compression. Peer dependencies, Node built-ins, native modules, stylesheets, and non-JavaScript assets can be excluded and are called out in the report.</p>
@@ -83,6 +83,7 @@ function renderExplorer() {
     </section>
 
     <aside id="offline-banner" class="offline-banner" hidden><strong>Offline edition.</strong> The interface is cached, but a fresh package needs the npm registry. Reconnect to analyze.</aside>
+    <aside id="update-toast" class="update-toast" hidden role="status"><span>A new edition is ready.</span><button id="reload-update" class="quiet-button" type="button">Reload</button></aside>
 
     <section id="analysis-status" class="analysis-status" hidden aria-labelledby="status-heading" aria-live="polite">
       <div><p class="kicker">Live dispatch</p><h2 id="status-heading">Opening the registry record…</h2><p id="status-detail">This work happens locally and may take a moment on large dependency trees.</p></div>
@@ -184,11 +185,10 @@ async function analyze(raw: string) {
     });
     const archive = await downloadPackage(manifest, controller.signal);
     const completeManifest = archive.manifest;
-    const entries = listPublicEntries(completeManifest);
-    const chosen = entries.slice(0, 4);
-    setStatus("Running the bundle desk…", `Measuring ${chosen.length} ${chosen.length === 1 ? "entry" : "entries"} with esbuild-wasm.`, 55);
-    const bundlePromise = bundleEntries(archive, chosen, controller.signal, (done, total, label) => {
-      setStatus("Running the bundle desk…", done === total ? "Compressing the final figures." : `Tree-shaking ${label}. Dependency trail: ${dependencyProgress}.`, 55 + (done / Math.max(1, total)) * 38);
+    const entries = listPublicEntries(completeManifest, archive.files.keys());
+    setStatus("Running the bundle desk…", `Measuring all ${entries.length.toLocaleString()} public ${entries.length === 1 ? "entry" : "entries"} with esbuild-wasm.`, 55);
+    const bundlePromise = bundleEntries(archive, entries, controller.signal, (done, total, label) => {
+      setStatus("Running the bundle desk…", done === total ? "Compressing the final figures." : `Tree-shaking ${label} (${done + 1}/${total}). Dependency trail: ${dependencyProgress}.`, 55 + (done / Math.max(1, total)) * 38);
     });
     const [dependencies, bundles] = await Promise.all([dependenciesPromise, bundlePromise]);
     Object.assign(state, { packument, manifest: completeManifest, archive, entries, dependencies, history: versionHistory(packument), measurements: bundles.measurements, named: bundles.named, downloaded: bundles.downloaded });
@@ -240,19 +240,19 @@ function renderResults() {
       <div class="report-stamp"><span>Measured locally</span><strong>${new Date().toLocaleDateString(undefined, { day: "2-digit", month: "short", year: "numeric" })}</strong></div>
     </div>
     <div class="fact-strip">
-      <div><span>Installed footprint</span><strong>${formatBytes(dependencies.unpackedBytes)}</strong><small>${formatBytes(manifest.dist?.unpackedSize)} package alone</small></div>
+      <div><span>${dependencies.capped ? "Installed footprint (minimum)" : "Installed footprint"}</span><strong>${formatBytes(dependencies.unpackedBytes)}</strong><small>${dependencies.capped ? "400-package traversal cap reached" : `${formatBytes(manifest.dist?.unpackedSize)} package alone`}</small></div>
       <div><span>Production tree</span><strong>${dependencies.unique.toLocaleString()} deps</strong><small>${dependencies.capped ? "400+ (count capped)" : `${dependencies.direct.length} direct`}</small></div>
       <div><span>Public entries</span><strong>${entries.length.toLocaleString()}</strong><small>${manifest.exports ? "exports map" : "legacy resolution"}</small></div>
       <div><span>Analysis download</span><strong>${formatBytes(state.downloaded)}</strong><small>tarballs fetched this run</small></div>
     </div>
     ${likelyNode ? `<div class="notice warning"><strong>△ Node runtime imports detected.</strong> ${externals.map(escapeHtml).join(", ")} stayed external, so this is not a complete standalone browser bundle.</div>` : `<div class="notice success"><strong>✓ Browser bundle completed.</strong> ${externals.length ? `External peer contracts: ${externals.map(escapeHtml).join(", ")}.` : "No Node built-ins or peer contracts were found in the measured paths."}</div>`}
     <section class="report-section" aria-labelledby="entry-heading">
-      <div class="section-heading"><div><p class="kicker">Exports desk</p><h3 id="entry-heading">Cost by public door</h3></div><p>First four entries are measured automatically. Choose up to eight to rerun.</p></div>
+      <div class="section-heading"><div><p class="kicker">Exports desk</p><h3 id="entry-heading">Cost by public door</h3></div><p>Every concrete public export is measured. Rerun any set when you need a fresh figure.</p></div>
       <div class="table-wrap"><table class="measure-table"><thead><tr><th scope="col">Entry</th><th scope="col">Condition → target</th><th scope="col">Minified</th><th scope="col">Gzip</th><th scope="col">Brotli</th></tr></thead><tbody>${measurements.map((measurement) => `<tr><th scope="row"><code>${escapeHtml(measurement.entry.subpath)}</code></th><td><span class="condition">${escapeHtml(measurement.entry.condition)}</span> ${escapeHtml(measurement.entry.target)}</td><td data-label="Minified">${formatBytes(measurement.minified)}</td><td data-label="Gzip"><strong>${formatBytes(measurement.gzip)}</strong></td><td data-label="Brotli">${formatBytes(measurement.brotli)}</td></tr>`).join("")}</tbody></table></div>
-      <details class="entry-picker"><summary>Choose different exports</summary><fieldset><legend>Select up to eight public entries</legend><div class="check-grid">${entries.map((entry, index) => `<label><input type="checkbox" name="entry" value="${index}" ${measurements.some((item) => item.entry.subpath === entry.subpath) ? "checked" : ""}/><span><code>${escapeHtml(entry.subpath)}</code><small>${escapeHtml(entry.condition)} → ${escapeHtml(entry.target)}</small></span></label>`).join("")}</div><button id="measure-selection" class="secondary-button" type="button">Measure selection</button><p id="selection-error" class="field-error" aria-live="polite"></p></fieldset></details>
+      <details class="entry-picker"><summary>Rerun selected exports (${entries.length.toLocaleString()} available)</summary><fieldset><legend>Select one or more public entries</legend><div class="check-grid">${entries.map((entry, index) => `<label><input type="checkbox" name="entry" value="${index}" ${measurements.some((item) => item.entry.subpath === entry.subpath) ? "checked" : ""}/><span><code>${escapeHtml(entry.subpath)}</code><small>${escapeHtml(entry.condition)} → ${escapeHtml(entry.target)}</small></span></label>`).join("")}</div><button id="measure-selection" class="secondary-button" type="button">Rerun selected exports</button><p id="selection-error" class="field-error" aria-live="polite"></p></fieldset></details>
     </section>
     <section class="report-section two-column" aria-labelledby="named-heading">
-      <div><p class="kicker">Tree-shaking desk</p><h3 id="named-heading">Named exports, isolated</h3><p>Up to ten statically discoverable names from <code>${escapeHtml(measurements[0]?.entry.subpath || ".")}</code>, each rebuilt alone.</p></div>
+      <div><p class="kicker">Tree-shaking desk</p><h3 id="named-heading">Named exports, isolated</h3><p>Every statically discoverable name from <code>${escapeHtml(measurements[0]?.entry.subpath || ".")}</code> is rebuilt alone.</p></div>
       <div>${named.length ? `<ol class="named-list">${named.map((item) => `<li><code>${escapeHtml(item.name)}</code><span>${formatBytes(item.gzip)} gzip</span><small>${formatBytes(item.minified)} min</small></li>`).join("")}</ol>` : `<p class="empty-note">No statically named ESM exports were reported. This often means a CommonJS or default-only entry.</p>`}</div>
     </section>
     <section class="report-section two-column" aria-labelledby="dependency-heading">
@@ -260,33 +260,34 @@ function renderResults() {
       <div>${dependencies.direct.length ? `<ul class="dependency-list">${dependencies.direct.slice(0, 12).map((item) => `<li><span>${escapeHtml(item.name)}</span><code>${escapeHtml(item.version || item.range)}</code></li>`).join("")}</ul>${dependencies.direct.length > 12 ? `<p class="field-note">+ ${dependencies.direct.length - 12} more direct dependencies</p>` : ""}` : `<p class="empty-note">Zero declared production dependencies. A clean ledger.</p>`}</div>
     </section>
     <section class="report-section" aria-labelledby="history-heading"><div class="section-heading"><div><p class="kicker">Archive desk</p><h3 id="history-heading">Published weight by version</h3></div><p>Unpacked bytes reported by npm for the latest ${state.history.length} published versions.</p></div>${chart(state.history)}<details class="data-table"><summary>Read chart data</summary><table><thead><tr><th>Version</th><th>Date</th><th>Unpacked</th></tr></thead><tbody>${state.history.map((point) => `<tr><th scope="row">${escapeHtml(point.version)}</th><td>${escapeHtml(point.date.slice(0,10) || "Not in compact metadata")}</td><td>${formatBytes(point.unpackedSize)}</td></tr>`).join("")}</tbody></table></details></section>
-    <section class="share-desk" aria-labelledby="share-heading"><div><p class="kicker">Pass it on</p><h3 id="share-heading">Share the exact edition.</h3><p>The link reruns this public package and version in the recipient’s browser. The badge is a self-contained SVG snapshot—no tracking request.</p></div><div class="share-actions"><button id="copy-link" class="secondary-button" type="button">Copy result link</button><button id="download-badge" class="quiet-button" type="button">Download SVG badge</button><span id="copy-status" role="status"></span></div></section>
+    <section class="share-desk" aria-labelledby="share-heading"><div><p class="kicker">Pass it on</p><h3 id="share-heading">Share the exact edition.</h3><p>The link reruns this public package and version in the recipient’s browser. The badge is a worker-served SVG with its measured gzip figure in the URL—safe to embed and free of tracking.</p></div><div class="share-actions"><button id="copy-link" class="secondary-button" type="button">Copy result link</button><button id="copy-badge" class="quiet-button" type="button">Copy badge embed</button><a id="badge-link" class="quiet-button badge-link" href="${escapeHtml(badgeUrl())}" target="_blank" rel="noreferrer">Open SVG badge</a><span id="copy-status" role="status"></span></div></section>
     <aside class="method-note"><strong>Scope of this estimate.</strong> JavaScript only; CSS, static assets, optional/native modules, and external peers are excluded. esbuild target: ES2020 browser, ESM, minified. ${warnings.length ? escapeHtml(warnings.join(" ")) : "No additional build warnings."}</aside>`;
   results.hidden = false;
   bindResultActions();
   results.scrollIntoView({ behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth", block: "start" });
 }
 
-function badgeSvg(): string {
+function badgeUrl(): string {
   const pkg = state.manifest!;
   const gzip = state.measurements[0]?.gzip;
-  const left = `${pkg.name}@${pkg.version}`;
-  const right = `${formatBytes(gzip)} gzip`;
-  const leftWidth = Math.max(104, left.length * 7 + 18), rightWidth = Math.max(82, right.length * 7 + 18);
-  return `<svg xmlns="http://www.w3.org/2000/svg" role="img" aria-label="${escapeHtml(left)}: ${escapeHtml(right)}" width="${leftWidth + rightWidth}" height="28"><rect width="${leftWidth}" height="28" fill="#121513"/><rect x="${leftWidth}" width="${rightWidth}" height="28" fill="#006f7a"/><g fill="#fff" font-family="Arial,sans-serif" font-size="12"><text x="9" y="18">${escapeHtml(left)}</text><text x="${leftWidth + 9}" y="18">${escapeHtml(right)}</text></g></svg>`;
+  const params = new URLSearchParams({ package: pkg.name, version: pkg.version, gzip: String(gzip ?? 0) });
+  return `${location.origin}/badge.svg?${params}`;
 }
 
 function bindResultActions() {
   document.querySelector("#measure-selection")?.addEventListener("click", async () => {
     const error = document.querySelector<HTMLElement>("#selection-error")!;
     const selected = [...document.querySelectorAll<HTMLInputElement>('input[name="entry"]:checked')].map((input) => state.entries[Number(input.value)]).filter(Boolean) as PublicEntry[];
-    if (!selected.length || selected.length > 8) { error.textContent = "Select between one and eight entries."; return; }
+    if (!selected.length) { error.textContent = "Select at least one public entry."; return; }
     error.textContent = "";
     const controller = new AbortController(); state.controller = controller;
     try {
       setStatus("Running the bundle desk…", `Measuring ${selected.length} selected entries.`, 55);
       const bundles = await bundleEntries(state.archive!, selected, controller.signal, (done, total, label) => setStatus("Running the bundle desk…", done === total ? "Compressing the final figures." : `Tree-shaking ${label}.`, 55 + (done / Math.max(1, total)) * 40));
-      state.measurements = bundles.measurements; state.named = bundles.named; state.downloaded = bundles.downloaded;
+      const refreshed = new Map(state.measurements.map((measurement) => [measurement.entry.subpath, measurement]));
+      bundles.measurements.forEach((measurement) => refreshed.set(measurement.entry.subpath, measurement));
+      state.measurements = state.entries.map((entry) => refreshed.get(entry.subpath)).filter(Boolean) as BundleMeasurement[];
+      state.named = bundles.named; state.downloaded = bundles.downloaded;
       document.querySelector<HTMLElement>("#analysis-status")!.hidden = true;
       renderResults();
     } catch (caught) {
@@ -298,11 +299,23 @@ function bindResultActions() {
     await navigator.clipboard.writeText(location.href);
     document.querySelector("#copy-status")!.textContent = "Link copied.";
   });
-  document.querySelector("#download-badge")?.addEventListener("click", () => {
-    const url = URL.createObjectURL(new Blob([badgeSvg()], { type: "image/svg+xml" }));
-    const anchor = document.createElement("a"); anchor.href = url; anchor.download = `${state.manifest!.name.replace("/", "-")}-size.svg`; anchor.click();
-    URL.revokeObjectURL(url); document.querySelector("#copy-status")!.textContent = "Badge downloaded.";
+  document.querySelector("#copy-badge")?.addEventListener("click", async () => {
+    const url = badgeUrl();
+    await navigator.clipboard.writeText(`<img src="${url}" alt="${state.manifest!.name} bundle size" />`);
+    document.querySelector("#copy-status")!.textContent = "Badge embed copied.";
   });
 }
 
-if ("serviceWorker" in navigator && import.meta.env.PROD) addEventListener("load", () => navigator.serviceWorker.register("/sw.js").catch(() => undefined));
+if ("serviceWorker" in navigator && import.meta.env.PROD) addEventListener("load", () => {
+  const toast = document.querySelector<HTMLElement>("#update-toast");
+  const showUpdate = () => { if (toast) toast.hidden = false; };
+  navigator.serviceWorker.addEventListener("controllerchange", showUpdate);
+  navigator.serviceWorker.register("/sw.js", { updateViaCache: "none" }).then((registration) => {
+    registration.addEventListener("updatefound", () => {
+      registration.installing?.addEventListener("statechange", () => {
+        if (registration.installing?.state === "installed" && navigator.serviceWorker.controller) showUpdate();
+      });
+    });
+  }).catch(() => undefined);
+  document.querySelector("#reload-update")?.addEventListener("click", () => location.reload());
+});
