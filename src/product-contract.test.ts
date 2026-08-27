@@ -24,17 +24,17 @@ describe("static product contract", () => {
     expect(css).toContain(":focus-visible");
     expect(css).toContain("prefers-reduced-motion: reduce");
   });
-  it("ships an unbounded export report, worker badge route, and update-aware service worker registration", () => {
+  it("ships an unbounded export report, static badge route, and update-aware service worker registration", () => {
     const config = readFileSync("public/staticwebapp.config.json", "utf8");
     const vite = readFileSync("vite.config.ts", "utf8");
     expect(source).not.toContain("entries.slice(0, 4)");
     expect(source).not.toContain("selected.length > 8");
-    expect(source).toContain("/badge.svg?");
+    expect(readFileSync("src/badge.ts", "utf8")).toContain("/badge.svg?");
     expect(source).toContain('updateViaCache: "none"');
     expect(source).toContain("const hadController");
     expect(config).toContain('"/badge.svg"');
-    expect(readFileSync("api/package.json", "utf8")).toContain('"@azure/functions"');
-    expect(readFileSync("api/src/functions/badge.cjs", "utf8")).toContain('app.http("badge"');
+    expect(config).not.toContain('"rewrite":"/api/badge"');
+    expect(readFileSync("public/badge.svg", "utf8")).toContain('role="img"');
     expect(vite).toContain("package-ledger-shell-${buildId}");
   });
 });

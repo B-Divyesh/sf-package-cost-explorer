@@ -1,6 +1,7 @@
 import "./style.css";
 import { downloadPackage } from "./archive";
 import { bundleEntries } from "./bundler";
+import { badgeDataUrl, badgeLabel, badgeUrl } from "./badge";
 import { listPublicEntries } from "./exports-map";
 import { parsePackageSpec, resolveManifest } from "./package-spec";
 import { confirmPublicPackage, countDependencies, fetchPackument, versionHistory } from "./registry";
@@ -265,18 +266,16 @@ function renderResults() {
       <div>${dependencies.direct.length ? `<ul class="dependency-list">${dependencies.direct.slice(0, 12).map((item) => `<li><span>${escapeHtml(item.name)}</span><code>${escapeHtml(item.version || item.range)}</code></li>`).join("")}</ul>${dependencies.direct.length > 12 ? `<p class="field-note">+ ${dependencies.direct.length - 12} more direct dependencies</p>` : ""}` : `<p class="empty-note">Zero declared production dependencies. A clean ledger.</p>`}</div>
     </section>
     <section class="report-section" aria-labelledby="history-heading"><div class="section-heading"><div><p class="kicker">Archive desk</p><h3 id="history-heading">Published weight by version</h3></div><p>Unpacked bytes reported by npm for the latest ${state.history.length} published versions.</p></div>${chart(state.history)}<details class="data-table"><summary>Read chart data</summary><table><thead><tr><th>Version</th><th>Date</th><th>Unpacked</th></tr></thead><tbody>${state.history.map((point) => `<tr><th scope="row">${escapeHtml(point.version)}</th><td>${escapeHtml(point.date.slice(0,10) || "Not in compact metadata")}</td><td>${formatBytes(point.unpackedSize)}</td></tr>`).join("")}</tbody></table></details></section>
-    <section class="share-desk" aria-labelledby="share-heading"><div><p class="kicker">Pass it on</p><h3 id="share-heading">Share the exact edition.</h3><p>The link reruns this public package and version in the recipient’s browser. The badge is a worker-served SVG with its measured gzip figure in the URL—safe to embed and free of tracking.</p></div><div class="share-actions"><button id="copy-link" class="secondary-button" type="button">Copy result link</button><button id="copy-badge" class="quiet-button" type="button">Copy badge embed</button><a id="badge-link" class="quiet-button badge-link" href="${escapeHtml(badgeUrl())}" target="_blank" rel="noreferrer">Open SVG badge</a><span id="copy-status" role="status"></span></div></section>
+    <section class="share-desk" aria-labelledby="share-heading"><div><p class="kicker">Pass it on</p><h3 id="share-heading">Share the exact edition.</h3><p>The link reruns this public package and version in the recipient’s browser. Copy Badge carries this report’s package, version, and measured gzip figure in a self-contained safe SVG; the public SVG route is a static compatibility badge, so it works on every Standard Static Web App deployment.</p></div><div class="share-actions"><button id="copy-link" class="secondary-button" type="button">Copy result link</button><button id="copy-badge" class="quiet-button" type="button">Copy measured badge</button><a id="badge-link" class="quiet-button badge-link" href="${escapeHtml(badgeUrl(location.origin, badgeValues()))}" target="_blank" rel="noreferrer">Open static SVG badge</a><span id="copy-status" role="status"></span></div></section>
     <aside class="method-note"><strong>Scope of this estimate.</strong> JavaScript only; CSS, static assets, optional/native modules, and external peers are excluded. esbuild target: ES2020 browser, ESM, minified. ${warnings.length ? escapeHtml(warnings.join(" ")) : "No additional build warnings."}</aside>`;
   results.hidden = false;
   bindResultActions();
   results.scrollIntoView({ behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth", block: "start" });
 }
 
-function badgeUrl(): string {
+function badgeValues() {
   const pkg = state.manifest!;
-  const gzip = state.measurements[0]?.gzip;
-  const params = new URLSearchParams({ package: pkg.name, version: pkg.version, gzip: String(gzip ?? 0) });
-  return `${location.origin}/badge.svg?${params}`;
+  return { packageName: pkg.name, version: pkg.version, gzip: state.measurements[0]?.gzip };
 }
 
 function bindResultActions() {
@@ -305,9 +304,9 @@ function bindResultActions() {
     document.querySelector("#copy-status")!.textContent = "Link copied.";
   });
   document.querySelector("#copy-badge")?.addEventListener("click", async () => {
-    const url = badgeUrl();
-    await navigator.clipboard.writeText(`<img src="${url}" alt="${state.manifest!.name} bundle size" />`);
-    document.querySelector("#copy-status")!.textContent = "Badge embed copied.";
+    const values = badgeValues();
+    await navigator.clipboard.writeText(`<img src="${badgeDataUrl(values)}" alt="${escapeHtml(badgeLabel(values))}" />`);
+    document.querySelector("#copy-status")!.textContent = "Measured badge embed copied.";
   });
 }
 

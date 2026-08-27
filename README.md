@@ -9,7 +9,8 @@ Package Cost Explorer is an exports-aware npm package cost ledger for frontend a
 - minified, gzip, and Brotli JavaScript cost for every public entry;
 - isolated tree-shaken cost for every statically discoverable named export;
 - recent version-over-version unpacked-size history;
-- a canonical share URL and worker-served embeddable SVG badge.
+- a canonical share URL, a static SVG compatibility badge, and a copied
+  self-contained SVG badge with the report’s measured values.
 
 All analysis runs in the browser. The app talks directly to the public npm registry, opens tarballs in memory, and loads esbuild-wasm only when an analysis begins. There is no lookup API, account, analytics, or package-query storage.
 
@@ -57,10 +58,12 @@ Peer dependencies and Node built-ins remain external and are named in the report
 ## Deploy
 
 Production is the Standard-tier Azure Static Web App `sf-package-cost-explorer`.
-Deploy `dist/` with the adjacent `api/` Azure Functions Node v4 worker; the checked-in
-Static Web Apps configuration routes `/badge.svg` to that worker and applies
-the production security/cache policy. There is intentionally no container
-fallback or ACR build path.
+Deploy `dist/` as a Standard Azure Static Web App. The checked-in Static Web
+Apps configuration serves `/badge.svg` as a static SVG (also when the UI adds
+the package/version/gzip query values), so no attached Function or container is
+required. Copied embeds are self-contained SVG data URLs and retain the exact
+measured package data. There is intentionally no container fallback or ACR
+build path.
 
 ## Privacy and license
 

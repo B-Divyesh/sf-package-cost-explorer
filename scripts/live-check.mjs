@@ -37,10 +37,10 @@ try {
   const badge = await fetch(badgeUrl);
   const type = badge.headers.get("content-type") || "";
   const body = await badge.text();
-  if (badge.status !== 200 || !type.includes("image/svg+xml") || !body.startsWith("<?xml")) {
+  if (badge.status !== 200 || !type.includes("image/svg+xml") || !body.startsWith("<?xml") || !body.includes('role="img"') || /<script|onload\s*=/i.test(body)) {
     throw new Error(`live badge failed: ${badge.status} ${type}`);
   }
-  console.log(`Live clean-profile, missing-package, and UI-generated badge checks passed: ${badgeUrl}`);
+  console.log(`Live clean-profile, missing-package, and safe static UI-generated badge checks passed: ${badgeUrl}`);
   await context.close();
 } finally {
   await browser.close();

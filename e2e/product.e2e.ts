@@ -20,6 +20,15 @@ test("a real npm package produces a complete local report", async ({ page }, tes
   await expect(page.locator(".measure-table tbody tr").first()).toContainText(/(?:B|kB|MB)/);
   await expect(page.getByText("Measured locally")).toBeVisible();
   expect(page.url()).toContain("nanoid%405.1.5");
+  const badgeUrl = await page.locator("#badge-link").getAttribute("href");
+  expect(badgeUrl).toMatch(/\/badge\.svg\?package=nanoid&version=5\.1\.5&gzip=\d+$/);
+  const badge = await page.request.get(badgeUrl!);
+  expect(badge.status()).toBe(200);
+  expect(badge.headers()["content-type"]).toContain("image/svg+xml");
+  const svg = await badge.text();
+  expect(svg).toContain('role="img"');
+  expect(svg).toContain("Package Cost Explorer");
+  expect(svg).not.toMatch(/<script|onload\s*=/i);
 });
 
 test("mobile page does not overflow and legal routes render one heading", async ({ page }, testInfo) => {

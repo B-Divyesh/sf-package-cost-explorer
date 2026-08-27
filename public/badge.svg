@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Package Cost Explorer browser-measured gzip badge" width="308" height="28" viewBox="0 0 308 28">
+  <title>Package Cost Explorer — browser-measured gzip badge</title>
+  <rect width="178" height="28" fill="#121513"/>
+  <rect x="178" width="130" height="28" fill="#006f7a"/>
+  <g fill="#fff" font-family="Arial, Helvetica, sans-serif" font-size="12">
+    <text x="9" y="18">Package Cost Explorer</text>
+    <text x="187" y="18">browser measured</text>
+  </g>
+</svg>

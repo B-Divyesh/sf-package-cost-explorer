@@ -1,5 +1,5 @@
 {
-  "navigationFallback": { "rewrite": "/index.html", "exclude": ["/api/*", "/assets/*", "/badge.svg", "/*.svg", "/*.wasm", "/*.webmanifest", "/*.txt", "/*.xml"] },
+  "navigationFallback": { "rewrite": "/index.html", "exclude": ["/assets/*", "/badge.svg", "/*.svg", "/*.wasm", "/*.webmanifest", "/*.txt", "/*.xml"] },
   "globalHeaders": {
     "X-Content-Type-Options": "nosniff",
     "Referrer-Policy": "strict-origin-when-cross-origin",
@@ -8,7 +8,7 @@
     "X-Frame-Options": "DENY"
   },
   "routes": [
-    {"route":"/badge.svg","rewrite":"/api/badge"},
+    {"route":"/badge.svg","headers":{"cache-control":"public, max-age=300"}},
     {"route":"/sw.js","headers":{"cache-control":"no-cache, no-store, must-revalidate"}},
     {"route":"/assets/*","headers":{"cache-control":"public, max-age=31536000, immutable"}},
     {"route":"/*.wasm","headers":{"cache-control":"public, max-age=31536000, immutable"}}
