@@ -31,15 +31,15 @@ export function resolveDependencyVersion(packument: Packument, range: string): s
 }
 
 export function versionHistory(packument: Packument, limit = 14): VersionPoint[] {
-  return Object.entries(packument.versions)
+  const points = Object.entries(packument.versions)
     .map(([version, manifest]) => ({
       version,
       date: packument.time?.[version] || "",
       unpackedSize: manifest.dist?.unpackedSize || 0,
     }))
-    .filter((point) => point.unpackedSize > 0 && point.date)
-    .sort((a, b) => a.date.localeCompare(b.date))
-    .slice(-limit);
+    .filter((point) => point.unpackedSize > 0);
+  if (packument.time) points.sort((a, b) => a.date.localeCompare(b.date));
+  return points.slice(-limit);
 }
 
 export async function countDependencies(

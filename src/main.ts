@@ -171,12 +171,11 @@ async function analyze(raw: string) {
 
     const packument = await fetchPackument(spec.name, controller.signal);
     const manifest = resolveManifest(packument, spec.requested);
-    const entries = listPublicEntries(manifest);
     const canonical = `${manifest.name}@${manifest.version}`;
     history.replaceState(null, "", `/?q=${encodeURIComponent(canonical)}`);
     const input = document.querySelector<HTMLInputElement>("#package-input")!;
     input.value = canonical;
-    setStatus("Reading the package archive…", `${entries.length} public ${entries.length === 1 ? "entry" : "entries"} found. Unpacking the published tarball.`, 22);
+    setStatus("Reading the package archive…", "Unpacking the published tarball and its complete package manifest.", 22);
 
     let dependencyProgress = 0;
     const dependenciesPromise = countDependencies(manifest, controller.signal, (count) => {
@@ -184,13 +183,15 @@ async function analyze(raw: string) {
       setStatus("Following the dependency trail…", `${count} unique production packages resolved from registry metadata.`, Math.min(52, 28 + count / 10));
     });
     const archive = await downloadPackage(manifest, controller.signal);
+    const completeManifest = archive.manifest;
+    const entries = listPublicEntries(completeManifest);
     const chosen = entries.slice(0, 4);
     setStatus("Running the bundle desk…", `Measuring ${chosen.length} ${chosen.length === 1 ? "entry" : "entries"} with esbuild-wasm.`, 55);
     const bundlePromise = bundleEntries(archive, chosen, controller.signal, (done, total, label) => {
       setStatus("Running the bundle desk…", done === total ? "Compressing the final figures." : `Tree-shaking ${label}. Dependency trail: ${dependencyProgress}.`, 55 + (done / Math.max(1, total)) * 38);
     });
     const [dependencies, bundles] = await Promise.all([dependenciesPromise, bundlePromise]);
-    Object.assign(state, { packument, manifest, archive, entries, dependencies, history: versionHistory(packument), measurements: bundles.measurements, named: bundles.named, downloaded: bundles.downloaded });
+    Object.assign(state, { packument, manifest: completeManifest, archive, entries, dependencies, history: versionHistory(packument), measurements: bundles.measurements, named: bundles.named, downloaded: bundles.downloaded });
     setStatus("Edition complete.", `${canonical} was measured entirely in this tab.`, 100);
     renderResults();
     window.setTimeout(() => { document.querySelector<HTMLElement>("#analysis-status")!.hidden = true; }, 450);
@@ -258,7 +259,7 @@ function renderResults() {
       <div><p class="kicker">Dependency desk</p><h3 id="dependency-heading">What arrives with it</h3><p>The production graph is resolved from each published manifest. Dev and optional dependencies are excluded.</p></div>
       <div>${dependencies.direct.length ? `<ul class="dependency-list">${dependencies.direct.slice(0, 12).map((item) => `<li><span>${escapeHtml(item.name)}</span><code>${escapeHtml(item.version || item.range)}</code></li>`).join("")}</ul>${dependencies.direct.length > 12 ? `<p class="field-note">+ ${dependencies.direct.length - 12} more direct dependencies</p>` : ""}` : `<p class="empty-note">Zero declared production dependencies. A clean ledger.</p>`}</div>
     </section>
-    <section class="report-section" aria-labelledby="history-heading"><div class="section-heading"><div><p class="kicker">Archive desk</p><h3 id="history-heading">Published weight over time</h3></div><p>Unpacked bytes reported by npm for the latest ${state.history.length} published versions.</p></div>${chart(state.history)}<details class="data-table"><summary>Read chart data</summary><table><thead><tr><th>Version</th><th>Date</th><th>Unpacked</th></tr></thead><tbody>${state.history.map((point) => `<tr><th scope="row">${escapeHtml(point.version)}</th><td>${escapeHtml(point.date.slice(0,10))}</td><td>${formatBytes(point.unpackedSize)}</td></tr>`).join("")}</tbody></table></details></section>
+    <section class="report-section" aria-labelledby="history-heading"><div class="section-heading"><div><p class="kicker">Archive desk</p><h3 id="history-heading">Published weight by version</h3></div><p>Unpacked bytes reported by npm for the latest ${state.history.length} published versions.</p></div>${chart(state.history)}<details class="data-table"><summary>Read chart data</summary><table><thead><tr><th>Version</th><th>Date</th><th>Unpacked</th></tr></thead><tbody>${state.history.map((point) => `<tr><th scope="row">${escapeHtml(point.version)}</th><td>${escapeHtml(point.date.slice(0,10) || "Not in compact metadata")}</td><td>${formatBytes(point.unpackedSize)}</td></tr>`).join("")}</tbody></table></details></section>
     <section class="share-desk" aria-labelledby="share-heading"><div><p class="kicker">Pass it on</p><h3 id="share-heading">Share the exact edition.</h3><p>The link reruns this public package and version in the recipient’s browser. The badge is a self-contained SVG snapshot—no tracking request.</p></div><div class="share-actions"><button id="copy-link" class="secondary-button" type="button">Copy result link</button><button id="download-badge" class="quiet-button" type="button">Download SVG badge</button><span id="copy-status" role="status"></span></div></section>
     <aside class="method-note"><strong>Scope of this estimate.</strong> JavaScript only; CSS, static assets, optional/native modules, and external peers are excluded. esbuild target: ES2020 browser, ESM, minified. ${warnings.length ? escapeHtml(warnings.join(" ")) : "No additional build warnings."}</aside>`;
   results.hidden = false;

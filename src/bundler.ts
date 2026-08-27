@@ -136,7 +136,9 @@ async function bundleOnce(root: ArchivePackage, entry: PublicEntry, store: Archi
   const externals = new Set<string>();
   const notes = new Set<string>();
   const rootSpecifier = entry.subpath === "." ? root.manifest.name : `${root.manifest.name}${entry.subpath.slice(1)}`;
-  const entrySource = named ? `export { ${named} } from ${JSON.stringify(rootSpecifier)};` : `export * from ${JSON.stringify(rootSpecifier)};`;
+  const entrySource = named
+    ? `export { ${named} } from ${JSON.stringify(rootSpecifier)};`
+    : `export * from ${JSON.stringify(rootSpecifier)}; import * as __package from ${JSON.stringify(rootSpecifier)}; export { __package };`;
 
   const plugin: Plugin = {
     name: "npm-browser-ledger",
@@ -261,7 +263,7 @@ export async function bundleEntries(
 
   const named: NamedMeasurement[] = [];
   const primary = measurements[0];
-  const names = (primary?.exports || []).filter((name) => name !== "default" && /^[A-Za-z_$][\w$]*$/.test(name)).slice(0, 10);
+  const names = (primary?.exports || []).filter((name) => name !== "default" && name !== "__package" && /^[A-Za-z_$][\w$]*$/.test(name)).slice(0, 10);
   for (const name of names) {
     const result = await bundleOnce(root, primary!.entry, store, name);
     named.push({ name, minified: result.bytes.length, gzip: gzipSync(result.bytes, { level: 9 }).length });
