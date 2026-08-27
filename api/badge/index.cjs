@@ -55,6 +55,8 @@ function response(query) {
     headers: {
       "content-type": "image/svg+xml; charset=utf-8",
       "cache-control": "public, max-age=300",
+      "content-security-policy": "default-src 'none'; sandbox",
+      "referrer-policy": "no-referrer",
       "x-content-type-options": "nosniff",
     },
     body: renderBadge(query),

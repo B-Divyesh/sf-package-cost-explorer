@@ -37,7 +37,9 @@ describe("static product contract", () => {
     expect(config).toContain('".webmanifest": "application/manifest+json"');
     expect(readFileSync("api/src/functions/badge.cjs", "utf8")).toContain('app.http("badge"');
     expect(readFileSync("api/badge/contract.cjs", "utf8")).toContain("assert.notEqual(measured.body, other.body)");
+    expect(readFileSync("api/badge/index.cjs", "utf8")).toContain("default-src 'none'; sandbox");
     expect(vite).toContain("package-ledger-shell-${buildId}");
     expect(vite).toContain("local-badge-worker");
+    expect(vite).toContain('url.pathname === "/badge.svg"');
   });
 });

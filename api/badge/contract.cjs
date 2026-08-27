@@ -10,6 +10,7 @@ test("per-report badge preserves package, version, and gzip in an accessible SVG
   assert.equal(measured.status, 200);
   assert.equal(measured.headers["content-type"], "image/svg+xml; charset=utf-8");
   assert.equal(measured.headers["cache-control"], "public, max-age=300");
+  assert.equal(measured.headers["content-security-policy"], "default-src 'none'; sandbox");
   assert.match(measured.body, /role="img"/);
   assert.match(measured.body, /nanoid@5\.1\.5/);
   assert.match(measured.body, /473 B gzip/);
