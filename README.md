@@ -51,7 +51,14 @@ Peer dependencies and Node built-ins remain external and are named in the report
 
 ## Deploy
 
-Deploy `dist/` as an Azure Static Web App. `public/staticwebapp.config.json` supplies SPA fallbacks, security headers, CSP, and immutable asset caching. Infrastructure, DNS, and billing are intentionally outside this repository.
+The production path is a container that builds the existing `dist/` artifact and serves it on port 8080 as the non-root `nginx` user:
+
+```sh
+docker build -t package-cost-explorer .
+docker run --rm -p 8080:8080 package-cost-explorer
+```
+
+The container keeps HTML uncached, safely caches content-hashed Vite assets for one year, gives public un-hashed assets a one-day cache, preserves the service worker update path, applies the existing CSP/security policy, and falls back to `index.html` for client routes such as `/privacy` and `/terms`. `public/staticwebapp.config.json` remains for compatibility with the original static-host artifact. Factory infrastructure performs the production container deployment.
 
 ## Privacy and license
 
