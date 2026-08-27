@@ -1,0 +1,9 @@
+{
+  "slug": "package-cost-explorer",
+  "title": "Exports-aware npm package cost explorer (install size + per-entry bundle size), fully client-side",
+  "artifact_class": "static-web",
+  "user": "Frontend/Node developer choosing between dependencies who wants reliable install size, tree-shaken bundle size per subpath export, and dependency-tree bloat for a package@version, without a rate-limited, decaying service.",
+  "smallest_useful_product": "A static site that accepts package@version, reads npm registry metadata and package tarballs in the browser, resolves exports/main/module, estimates install footprint and transitive dependency count, bundles selected entry points with esbuild-wasm, displays minified and gzip sizes, shows version history, and creates a shareable URL.",
+  "constraints": "Fully client-side. Package downloads are capped at 50 MB. Browser analysis cannot bundle native/optional dependencies and must identify Node-only packages. CSS and asset accounting, local uploads, Deno/JSR, and side-effect analysis are not in v1.",
+  "monetization": "free"
+}
