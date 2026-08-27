@@ -240,7 +240,7 @@ function renderResults() {
       <div class="report-stamp"><span>Measured locally</span><strong>${new Date().toLocaleDateString(undefined, { day: "2-digit", month: "short", year: "numeric" })}</strong></div>
     </div>
     <div class="fact-strip">
-      <div><span>Published install</span><strong>${formatBytes(manifest.dist?.unpackedSize)}</strong><small>${manifest.dist?.fileCount ? `${manifest.dist.fileCount.toLocaleString()} files` : "unpacked metadata"}</small></div>
+      <div><span>Installed footprint</span><strong>${formatBytes(dependencies.unpackedBytes)}</strong><small>${formatBytes(manifest.dist?.unpackedSize)} package alone</small></div>
       <div><span>Production tree</span><strong>${dependencies.unique.toLocaleString()} deps</strong><small>${dependencies.capped ? "400+ (count capped)" : `${dependencies.direct.length} direct`}</small></div>
       <div><span>Public entries</span><strong>${entries.length.toLocaleString()}</strong><small>${manifest.exports ? "exports map" : "legacy resolution"}</small></div>
       <div><span>Analysis download</span><strong>${formatBytes(state.downloaded)}</strong><small>tarballs fetched this run</small></div>

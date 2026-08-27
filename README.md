@@ -2,7 +2,7 @@
 
 Package Cost Explorer is an exports-aware npm package cost ledger for frontend and Node developers. Give it a package, dist-tag, exact version, or semver range and it reports:
 
-- published unpacked install size and file count;
+- aggregate unpacked install footprint and root-package size;
 - unique production dependencies, with direct-version resolution;
 - every non-pattern public subpath in the package's `exports` map;
 - minified, gzip, and Brotli JavaScript cost for selected entries;

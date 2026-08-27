@@ -70,6 +70,7 @@ export interface NamedMeasurement {
 export interface DependencyReport {
   unique: number;
   traversed: number;
+  unpackedBytes: number;
   capped: boolean;
   direct: Array<{ name: string; range: string; version?: string }>;
 }

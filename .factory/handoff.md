@@ -1,1 +1,52 @@
-# Handoff\n\n(written by the worker at the end of each work order)
+# Package Cost Explorer — build handoff
+
+## What shipped
+
+- A Vite + vanilla TypeScript static application implementing real, browser-only npm analysis.
+- Package input supports unscoped/scoped names, exact versions, dist-tags, and semver ranges; canonical URLs auto-run the exact resolved version.
+- Compact npm metadata resolution, 50 MB-capped tarball download, safe in-memory tar extraction, and authoritative `package.json` reading from the archive.
+- Exports-aware browser/import/module/default resolution for explicit public subpaths, with legacy `module`/`browser`/`main` fallback.
+- Lazy esbuild-wasm bundle analysis with ES2020 browser output, minification, gzip, Brotli, selectable entry points, and up to ten isolated named-export measurements.
+- Aggregate production install footprint, unique transitive count, direct dependency versions, and a 400-package safety cap.
+- Recent published unpacked-size chart with an accessible table alternative.
+- Node built-in and peer dependency detection, plus visible limitations/warnings rather than false standalone totals.
+- Shareable result URLs and downloadable, self-contained SVG snapshot badges.
+- Offline shell/service worker, loading/cancel/error/offline/empty states, keyboard paths, reduced-motion handling, and 390px responsive layout.
+- `/privacy` and `/terms` routes, PWA manifest, favicon, robots/sitemap, CSP/security/cache rules for Azure Static Web Apps.
+- Original generated hero artwork with AVIF/WebP responsive derivatives. Prompt and provenance are in `.factory/design.md` and `assets/src/`.
+
+## Run and verify
+
+```sh
+npm ci
+npm test
+npm run build
+npx playwright install chromium
+npm run test:e2e
+```
+
+Build output is exactly `dist/`, with `dist/index.html` at its root.
+
+Verification completed 2026-08-27:
+
+- `npm test`: 5 files, 14 tests passed.
+- `npm run test:e2e`: 4 passed, 2 intentional cross-project skips; includes a real `nanoid@5.1.5` registry/tarball/esbuild run, desktop/mobile checks, and axe serious/critical audit.
+- `npm audit`: 0 vulnerabilities.
+- Factory `verify-url.sh`: HTTP 200, 611 ms load, no page/console errors, title/lang/main present, one H1, 0 images missing alt, 0 unlabeled buttons.
+- Lighthouse mobile: Performance 100, Accessibility 100, Best Practices 100, SEO 100; LCP 1.2 s, CLS 0, TBT 0 ms, initial transfer 57 KiB.
+- Initial app JS: 69.08 kB uncompressed / 25.99 kB gzip; CSS: 12.54 kB / 3.60 kB gzip. The 12.3 MB esbuild and 1.06 MB Brotli WASM assets are lazy-loaded only after analysis begins.
+- Mobile hero: 28 kB AVIF / 48 kB WebP; large hero: 108 kB AVIF / 180 kB WebP.
+
+## Known gaps and honest deviations
+
+- CSS/static asset cost, optional/native modules, wildcard exports, local uploads, Deno/JSR, and side-effect analysis are intentionally outside v1 per the brief.
+- Peer dependencies and Node built-ins remain external; the report names them and flags likely Node-only paths. A consumer's aliases, target, and already-shared dependencies can change actual app cost.
+- Registry manifests with non-semver/git dependency references fall back to the package's latest dist-tag when npm semver resolution is impossible.
+- The static deployment cannot serve a query-dependent SVG from a server worker without adding infrastructure. V1 therefore generates a downloadable, self-contained SVG badge locally (no tracking or runtime dependency). A future factory-managed edge worker can add stable remote badge URLs.
+- The service worker caches the shell and visited static assets, not registry data or tarballs. Opening the interface offline works; new analysis correctly asks the user to reconnect.
+
+## Next steps
+
+- Add the accuracy corpus for the 50 most-downloaded packages and compare against pinned local Vite builds to quantify the stated ±5% target.
+- Add npm alias/workspace-protocol resolution and pattern-export selection.
+- If factory infrastructure authorizes it, deploy a minimal badge edge worker using the same measurement schema.

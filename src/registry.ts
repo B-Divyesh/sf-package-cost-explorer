@@ -53,6 +53,7 @@ export async function countDependencies(
   const seen = new Set<string>();
   const packuments = new Map<string, Promise<Packument>>();
   let traversed = 0;
+  let unpackedBytes = root.dist?.unpackedSize || 0;
 
   const load = (name: string) => {
     const cached = packuments.get(name);
@@ -74,6 +75,7 @@ export async function countDependencies(
         if (seen.has(key)) return;
         seen.add(key);
         traversed += 1;
+        unpackedBytes += manifestSize(packument.versions[version]);
         const directItem = direct.find((candidate) => candidate.name === item.name && candidate.range === item.range);
         if (directItem) directItem.version = version;
         const manifest = packument.versions[version];
@@ -84,5 +86,9 @@ export async function countDependencies(
     }));
     onProgress(seen.size);
   }
-  return { unique: seen.size, traversed, capped: queue.length > 0, direct };
+  return { unique: seen.size, traversed, unpackedBytes, capped: queue.length > 0, direct };
+}
+
+function manifestSize(manifest: PackageManifest | undefined): number {
+  return manifest?.dist?.unpackedSize || 0;
 }
