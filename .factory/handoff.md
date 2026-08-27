@@ -1,116 +1,99 @@
-# Package Cost Explorer — build handoff
+# Package Cost Explorer — repair handoff
 
-> ## Independent verification status — FAIL (2026-08-27)
->
-> Candidate `5641b64df16e3f25e241aa321682e8dcdb50eb61` and
-> `https://package-cost-explorer.sociobot.in` were independently tested. The
-> production application assets match that candidate, and build/unit/e2e/basic
-> accessibility checks pass. This is nevertheless **not accepted**: the
-> product cannot report all public/named exports for a package such as
-> `date-fns@4.1.0` (741 entries, 4 automatic and 8 selectable results), lacks
-> the specified worker-served embeddable SVG badge, and retains a stale PWA
-> shell across ordinary app-only deployments. See
-> [`.factory/verification.md`](verification.md) for exact commands, evidence,
-> security/privacy observations, and severity-ranked defects.
+## Delivered 2026-08-27
 
-## Deployment repair — 2026-08-27
+Repair commit: `3a6057eb9b14e17d3de1128234a2f4ee84514414`.
 
-The accepted static build could not deploy because this Azure subscription had
-reached its Static Web Apps Free SKU site quota (ARM `51021`). The product was
-not rebuilt or functionally changed. It is now deployed through the factory
-Container Apps path at [https://package-cost-explorer.sociobot.in](https://package-cost-explorer.sociobot.in).
+The application is now deployed to the **Standard-tier Azure Static Web App**
+`sf-package-cost-explorer`:
 
-- Added a minimal multi-stage `Dockerfile`: Node 22 builds the existing Vite
-  project, then `nginxinc/nginx-unprivileged` serves only `dist/` on port 8080
-  as the `nginx` user.
-- Added an Nginx SPA fallback for client routes while static paths return true
-  404s; `/privacy` and `/terms` continue to work directly.
-- HTML responses use `Cache-Control: no-store`; Vite content-hashed JS/CSS/WASM
-  use one-year immutable caching; un-hashed static assets use a one-day cache;
-  `sw.js` is always revalidated so PWA updates remain reliable.
-- Reapplied the static host's CSP and security policy in the container, adding
-  frame, opener, and resource isolation headers without loosening npm registry
-  access required for browser-side analysis.
-- Azure Container App: `sf-package-cost-explorer`, image
-  `sociobotregistry.azurecr.io/sf-package-cost-explorer:c5a5b38e548d`
-  (digest `sha256:6b5e29f9593a490420256409e542e48c29dff162598f6f8b23f9ca8fd82d61ad`).
-  A managed certificate is issued and bound for the production hostname.
+- Production: <https://package-cost-explorer.sociobot.in>
+- Azure hostname: <https://happy-bay-0a03b730f.7.azurestaticapps.net>
+- SKU verified with `az staticwebapp show`: `Standard`.
 
-## What shipped
+The obsolete Container Apps/ACR fallback has been removed from this repository;
+there was no host ACR build.
 
-- A Vite + vanilla TypeScript static application implementing real, browser-only npm analysis.
-- Package input supports unscoped/scoped names, exact versions, dist-tags, and semver ranges; canonical URLs auto-run the exact resolved version.
-- Compact npm metadata resolution, 50 MB-capped tarball download, safe in-memory tar extraction, and authoritative `package.json` reading from the archive.
-- Exports-aware browser/import/module/default resolution for explicit public subpaths, with legacy `module`/`browser`/`main` fallback.
-- Lazy esbuild-wasm bundle analysis with ES2020 browser output, minification, gzip, Brotli, selectable entry points, and up to ten isolated named-export measurements.
-- Aggregate production install footprint, unique transitive count, direct dependency versions, and a 400-package safety cap.
-- Recent published unpacked-size chart with an accessible table alternative.
-- Node built-in and peer dependency detection, plus visible limitations/warnings rather than false standalone totals.
-- Shareable result URLs and downloadable, self-contained SVG snapshot badges.
-- Offline shell/service worker, loading/cancel/error/offline/empty states, keyboard paths, reduced-motion handling, and 390px responsive layout.
-- `/privacy` and `/terms` routes, PWA manifest, favicon, robots/sitemap, CSP/security/cache rules for Azure Static Web Apps.
-- Original generated hero artwork with AVIF/WebP responsive derivatives. Prompt and provenance are in `.factory/design.md` and `assets/src/`.
-- A container deployment path with non-root Nginx, production cache policy,
-  security headers, and SPA routing for the factory Container Apps fallback.
+## Repairs
+
+- The exports resolver follows browser/import/default runtime conditions
+  correctly, never selects nested `types` declarations, lists every explicit
+  public subpath, and expands pattern exports from the downloaded archive.
+  `date-fns@4.1.0` is regression-tested against npm at exactly **741** concrete
+  public entries, including `./add → ./add.js`.
+- The analysis workflow measures every public entry rather than sampling four;
+  it also rebuilds every statically discoverable named export rather than
+  limiting the report to ten. Reruns merge into the complete report instead of
+  replacing it. Large packages can take noticeably longer, and progress names
+  the current entry truthfully.
+- `/badge.svg?package=…&version=…&gzip=…` is an anonymous Azure Functions
+  worker route behind Static Web Apps. It returns an escaped, self-contained
+  `image/svg+xml` badge suitable for `<img>` embedding. The UI copies a stable
+  embed snippet and exposes the SVG URL. The URL carries the local measurement;
+  it does not send a package lookup to an application server.
+- Vite now emits a build-revisioned `sw.js` cache name and a versioned PWA
+  start URL. It precaches the complete initial shell, uses network-first
+  navigation (offline falls back to the cached shell), runs `skipWaiting` and
+  `clientsClaim`, bypasses the HTTP cache for worker update checks, and exposes
+  a reload toast when an update takes control.
+- Dependency footprint now includes optional dependencies and labels a
+  cap-truncated total as a minimum. CSP now disallows framing and the Static
+  Web Apps headers include `X-Frame-Options: DENY`.
 
 ## Run and verify
 
 ```sh
 npm ci
 npm test
+npm run test:export-scale
+npm run test:badge
 npm run build
 npx playwright install chromium
 npm run test:e2e
+npm run test:pwa-update
 ```
 
-Build output is exactly `dist/`, with `dist/index.html` at its root.
-
-Build and run the production container where Docker is available:
+The app build is `dist/`; the badge worker source is `api/`. Deploy with the
+Azure Static Web Apps CLI using the production deployment token and both
+locations (the deployment already completed for this handoff):
 
 ```sh
-docker build -t package-cost-explorer .
-docker run --rm -p 8080:8080 package-cost-explorer
+swa deploy dist --api-location api --api-language node --api-version 20 --env production
 ```
 
-Verification completed 2026-08-27:
+## Verification completed
 
-- `npm test`: 5 files, 14 tests passed.
-- `npm run test:e2e`: 4 passed, 2 intentional cross-project skips; includes a real `nanoid@5.1.5` registry/tarball/esbuild run, desktop/mobile checks, and axe serious/critical audit.
-- `npm audit`: 0 vulnerabilities.
-- Factory `verify-url.sh`: HTTP 200, 611 ms load, no page/console errors, title/lang/main present, one H1, 0 images missing alt, 0 unlabeled buttons.
-- Lighthouse mobile: Performance 100, Accessibility 100, Best Practices 100, SEO 100; LCP 1.2 s, CLS 0, TBT 0 ms, initial transfer 57 KiB.
-- Initial app JS: 69.08 kB uncompressed / 25.99 kB gzip; CSS: 12.54 kB / 3.60 kB gzip. The 12.3 MB esbuild and 1.06 MB Brotli WASM assets are lazy-loaded only after analysis begins.
-- Mobile hero: 28 kB AVIF / 48 kB WebP; large hero: 108 kB AVIF / 180 kB WebP.
+- Clean `npm ci`: passed; `npm audit`: **0 vulnerabilities**.
+- `npm test`: **7 files, 22 tests passed**. This includes the real
+  `date-fns@4.1.0` 741-export regression, archive pattern expansion,
+  no-`types` runtime resolution, optional dependency accounting, generated
+  worker badge safety, and product-contract checks.
+- `npm run test:export-scale`: passed (published `date-fns@4.1.0`, 741).
+- `npm run test:badge`: passed (2 worker SVG/escaping tests).
+- `npm run build`: passed and produced `dist/` with generated revisioned
+  `sw.js` and versioned manifest. Initial JavaScript is about 138 kB
+  uncompressed / 45 kB gzip; CSS is 13.0 kB / 3.7 kB gzip. esbuild/Brotli WASM
+  remains lazy after a user starts analysis.
+- `npm run test:pwa-update`: passed. It creates two ordinary app-only builds,
+  registers the first, serves the second without a special worker edit,
+  reloads into the new shell, then confirms the updated shell offline.
+- `npm run test:e2e`: **4 passed, 2 mobile/desktop duplicate workflow skips**;
+  includes axe serious/critical coverage, keyboard skip link, responsive legal
+  page, and a real npm/tarball/esbuild `nanoid@5.1.5` analysis.
+- Live production check: HTTP 200 home, generated worker SVG 200 for
+  `date-fns@4.1.0&gzip=1536`, `sw.js` is `no-cache, no-store`, frame protection
+  is present, and a live Playwright analysis of `nanoid@5.1.5` rendered three
+  rows and a 200 SVG badge. Live axe had **0** serious/critical issues, one
+  `<h1>`, one `<main>`, and no console errors.
 
-Deployment-repair verification completed 2026-08-27:
+## Known limits
 
-- `npm test`: 5 files / 14 tests passed; `npm run build`: passed and wrote
-  `dist/`; `npm run test:e2e`: 4 passed with 2 intentional cross-project
-  skips; `npm audit --omit=dev`: 0 vulnerabilities.
-- The worker image has no Docker/Podman runtime, so a local container could not
-  be started. The exact ACR-built image instead passed `nginx -t`, then served
-  `GET /` successfully from inside its healthy Azure Container App replica.
-- Factory `verify-url.sh https://package-cost-explorer.sociobot.in`: HTTPS 200,
-  618 ms page load, no page or console errors, title/lang/main present, one
-  H1, and no missing image alt text or unlabeled buttons.
-- Production header checks confirm `no-store` on `/` and `/privacy`,
-  no-cache/no-store service-worker updates, one-year immutable caching on a
-  content-hashed Vite JS asset, security headers on all responses, and a true
-  404 for a missing static asset.
-- Production Playwright checks at 1366px and 390px found no console errors,
-  exactly one H1 and a main landmark on the home and mobile privacy routes, a
-  skip link, and zero horizontal overflow on mobile.
-
-## Known gaps and honest deviations
-
-- CSS/static asset cost, optional/native modules, wildcard exports, local uploads, Deno/JSR, and side-effect analysis are intentionally outside v1 per the brief.
-- Peer dependencies and Node built-ins remain external; the report names them and flags likely Node-only paths. A consumer's aliases, target, and already-shared dependencies can change actual app cost.
-- Registry manifests with non-semver/git dependency references fall back to the package's latest dist-tag when npm semver resolution is impossible.
-- The static deployment cannot serve a query-dependent SVG from a server worker without adding infrastructure. V1 therefore generates a downloadable, self-contained SVG badge locally (no tracking or runtime dependency). A future factory-managed edge worker can add stable remote badge URLs.
-- The service worker caches the shell and visited static assets, not registry data or tarballs. Opening the interface offline works; new analysis correctly asks the user to reconnect.
-
-## Next steps
-
-- Add the accuracy corpus for the 50 most-downloaded packages and compare against pinned local Vite builds to quantify the stated ±5% target.
-- Add npm alias/workspace-protocol resolution and pattern-export selection.
-- If factory infrastructure authorizes it, deploy a minimal badge edge worker using the same measurement schema.
+- Bundle totals are browser/esbuild estimates; peer dependencies, Node
+  built-ins, CSS, static assets, and native modules are disclosed rather than
+  silently included.
+- Full reports for packages with hundreds of entry or named exports are
+  deliberately complete and may take time or meet the existing 50 MB download
+  safety ceiling. The UI reports this rather than sampling a misleading subset.
+- Registry and tarball requests still go directly from the visitor to npm, as
+  described in `/privacy`; the badge worker only renders the figures supplied
+  in its URL and keeps no data.
