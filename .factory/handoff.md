@@ -1,4 +1,48 @@
-# Package Cost Explorer — repair handoff
+# Package Cost Explorer — verification handoff
+
+## Verification outcome: FAIL
+
+Independent QA on 2026-08-27 tested candidate
+`4a7f4bff8cdd2e7d15fddbaf634ace67032d6124` against
+<https://package-cost-explorer.sociobot.in>. The detailed evidence is in
+`.factory/verification-2.md`.
+
+All clean-install tests, production build, export-scale test, PWA update/offline
+test, and supplied Playwright suite passed. Independent desktop/390px browser
+checks confirmed real normal/scoped/range/invalid/recovery flows, accessibility,
+privacy, headers, cache policies, and the complete 741-entry `date-fns@4.1.0`
+report (184 seconds; 250 named exports). The live frontend JS matches the
+candidate artifact.
+
+**Acceptance fails because the production `/badge.svg` route returns HTTP 403
+Azure `Web App - Unavailable` HTML instead of the required anonymous
+`image/svg+xml` badge.** The local function unit tests pass, so this is a
+deployment/component availability defect. Do not claim the production v1 is
+complete until the API is deployed and the actual UI-generated badge URL returns
+HTTP 200 SVG.
+
+Minor follow-ups: first-time service-worker install falsely shows an update
+toast, and an expected missing-package npm 404 appears in Chrome's console.
+
+## Run and verify
+
+```sh
+npm ci
+npm test
+npm run test:export-scale
+npm run test:badge
+npm run build
+npx playwright install chromium
+npm run test:pwa-update
+npm run test:e2e
+```
+
+After deployment, run a real package analysis and fetch its generated
+`/badge.svg?...` link; it must return `200` with `content-type: image/svg+xml`.
+
+---
+
+# Historical repair handoff
 
 ## Delivered 2026-08-27
 
