@@ -72,6 +72,23 @@ npm run test:pwa-update
 npm run build
 ```
 
+## Deployment
+
+Factory static deployment `6896384f-75ca-453b-9d1a-ab584c6de207` succeeded at
+`https://package-cost-explorer.sociobot.in` with build revision
+`9e80821f3fc652ad57125750549041c4d0cf53cd`.
+
+Post-deploy checks found:
+
+- HTTP 200 for `/`, `/demo`, `/privacy`, `/terms`, the social card, and the
+  apple-touch icon; HTTP 404 for `/not-a-real-route`.
+- CSP, `X-Content-Type-Options`, and `Referrer-Policy` headers on production.
+- The factory URL verifier passed `/demo` with no console errors, one h1, one
+  main, `lang=en`, complete image alt text, and labelled buttons.
+- `npm run test:live` passed a clean service-worker install, missing-package
+  handling, a real `nanoid@5.1.5` measurement, its 473 B gzip badge, and the
+  manifest MIME check.
+
 ## Known gaps
 
 No blocking review finding remains. Package figures are estimates and can differ
