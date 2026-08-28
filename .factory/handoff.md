@@ -1,70 +1,46 @@
-# Polish 2 handoff
+# Review 3 handoff
 
 ## Outcome
 
-The release repair is deployed. Product code was committed and pushed as
-`e40f70dd23e7bbde28fdb72f9b5091688bcb9f4e` (`fix: close review two claim and
-mobile gaps`) and `1f80fe8482a819103ab3323e74fd4ea7d1ee698a` (`fix: install
-badge function dependencies for deploy`). Both are live at
-<https://package-cost-explorer.sociobot.in>.
-The live HTML references `assets/index-B5uTgNIl.js`, the build produced by that
-commit.
+No product code was changed. The reviewer added .factory/review-3.md and
+updated this handoff. The independent result is **PASS** at revision
+9d67a9ce17a035333fc601528a2a45df107b14f4 against
+https://package-cost-explorer.sociobot.in.
 
-## What changed
+## What was verified
 
-- Added fixture-backed claim coverage for a completed direct npm measurement:
-  search, packument, dependency metadata, tarball download, browser bundling,
-  and a visible non-zero production-dependency count.
-- Expanded the sample-report and privacy assertions to cover the report’s
-  dependency field and prove completed reports are not persisted.
-- Made first-screen metric terms consistent, removed the vague duration claim,
-  placed all three facts above the 390 × 844 fold, and gave example buttons
-  verb names.
-- Kept demo mode memory-only with reset/exit controls; clarified storage copy.
-- Completed the standalone server 404 shell with metadata, skip link,
-  navigation, footer, and legal links.
-- Made `npm run build` install the managed badge function dependencies before
-  the static upload, preventing a future `/badge.svg` deployment regression.
+- Cold desktop and 390 × 844 contexts clearly established the job, audience,
+  and first action. The mobile screen had no horizontal overflow or console
+  errors.
+- The one-click demo showed a populated date-fns@4.1.0 report, persistent demo
+  banner, working reset/exit, isolated storage, same-origin network behavior,
+  and offline reload.
+- A live nanoid@5.1.5 measurement completed with three entries and a
+  query-aware 200 image/svg+xml badge.
+- Home, Demo, Privacy, Terms, and the 404 were checked for metadata, links,
+  focus behavior, announcement, header/footer, and Axe serious/critical issues.
+- All Review 1 and Review 2 findings were confirmed fixed against live behavior
+  and source, not merely marked fixed.
 
-## Verification
+## How to verify
 
-Fresh clone: `/tmp/pce-polish2-clean-kouxUH/repo` at `e40f70d`.
+From a clean clone:
 
-```text
-npm ci: PASS (0 vulnerabilities)
-npm test: PASS (24 Vitest tests + 2 badge-worker tests)
-npm run build: PASS; dist/index.html produced
-npm run test:pwa-update: PASS
-npm run test:e2e: PASS (22 tests across desktop and 390 × 844 mobile)
-```
+    npm ci
+    npm test
+    npm run build
+    npx playwright test e2e/claims.e2e.ts --project=desktop --grep @claim:sample-report
+    npx playwright test e2e/claims.e2e.ts --project=desktop --grep @claim:demo-isolation
+    npx playwright test e2e/claims.e2e.ts --project=desktop --grep @claim:offline-reload
+    npx playwright test e2e/claims.e2e.ts --project=desktop --grep @claim:npm-direct
+    npx playwright test e2e/claims.e2e.ts --project=desktop --grep @claim:no-account-analytics
+    npx playwright test e2e/claims.e2e.ts --project=desktop --grep @claim:report-sharing
 
-Every `.factory/claims.json` command was run separately in that clean clone:
-`sample-report`, `demo-isolation`, `offline-reload`, `npm-direct`,
-`no-account-analytics`, and `report-sharing` all passed.
-
-Additional local suite runs passed: `npm run test:accessibility` (4 Axe-backed
-route tests), `npm run test:privacy` (3 completed-flow privacy tests), and
-`npm run test:offline`.
-
-Live post-deploy evidence is in `/tmp/pce-polish2-live/`:
-
-- `verify-url.sh` passed: HTTP 200, title, `lang=en`, one h1, main landmark,
-  all image alt attributes, no unlabeled buttons, and no console errors.
-- Cold browser checks passed at `/`, `/?demo=1`, `/demo`, `/privacy`, `/terms`,
-  and `/not-a-real-route`; the sample made no cross-origin request, and the
-  three home facts ended at 575.7 px in a 390 × 844 viewport.
-- Cold `curl` to `/not-a-real-route` returned HTTP 404 and the designed 404
-  document. `/demo` and `/privacy` returned HTTP 200.
-- Axe serious/critical checks passed on all live SPA routes; screenshots are
-  `home-mobile.png`, `demo-mobile.png`, `404-mobile.png`, and the verifier’s
-  `screenshot-desktop.png` / `screenshot-mobile.png`.
-- Lighthouse mobile report: Performance 100, Accessibility 100, LCP 1,278 ms,
-  CLS 0 (`/tmp/pce-polish2-live/lighthouse-mobile.json`).
-- `npm run test:live` passed after the final deployment: clean profile,
-  missing-package recovery, query-aware SVG badge, and manifest MIME.
+All commands passed in /tmp/pce-review3-clean. npm test passed 24 Vitest tests
+and two badge-worker tests; npm run build produced dist; all six claim commands
+passed. Full evidence and the complete copy audit are in .factory/review-3.md.
 
 ## Remaining work
 
-None. The product remains a Vite + TypeScript static web app deployed through
-Azure Static Web Apps; no deployment, DNS, billing, or product defect is left
-open.
+None identified. This was a review-only change; no deployment, DNS, billing, or
+product behavior was modified.
