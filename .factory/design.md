@@ -58,6 +58,16 @@ One hero illustration visualizes an opened npm package archive as layers of blac
 
 Asset: `public/assets/package-ledger.webp` (responsive AVIF/WebP), generated 2026-08-27 with Azure OpenAI `factory-image` via `/opt/fleet/lib/gen-image.sh`. Original generated work for this product; prompt stored in `assets/src/package-ledger.prompt.json`. Every shipped candidate is visually reviewed for artifacts before use. Generated imagery is disclosed in the footer.
 
+The 1200×630 social card is a direct crop of that original artwork, produced
+locally with Sharp. The apple-touch icon is a raster export of the hand-authored
+package-mark favicon. Neither introduces a new source asset or license.
+
+The demo keeps the same broadsheet language. Its cyan proof strip behaves like
+a press-room annotation: it stays visible, names the sample state, and holds
+the reset and exit controls. The 404 uses an oversized cyan folio number behind
+the missing-page notice, extending the ledger metaphor without adding generic
+illustration.
+
 ## Accessibility and performance intent
 
 Ink/paper combinations meet WCAG AA. Cyan is dark enough for body links and is never the only state marker. Focus uses a 3px cyan outline plus offset. The chart includes a data table alternative. The illustration has explicit dimensions and useful alt text; mobile receives a ≤300 KB rendition. No external runtime fonts, scripts, trackers, or analytics.
