@@ -7,8 +7,10 @@ test("home is clear, keyboard-ready, and accessible", async ({ page }) => {
   await page.goto("/");
   await expect(page).toHaveTitle("Package Cost Explorer — Compare npm package costs");
   await expect(page.getByRole("heading", { level: 1 })).toHaveText("Compare npm package costs before you install.");
-  await expect(page.getByText(/For frontend and Node developers/)).toBeVisible();
+  await expect(page.getByText(/For frontend and Node developers.*installed size.*bundle size/)).toBeVisible();
   await expect(page.getByRole("link", { name: /Try it with sample data/ })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Use date-fns" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Use lodash-es" })).toBeVisible();
   await page.keyboard.press("Tab");
   await expect(page.locator(".skip-link")).toBeFocused();
   const audit = await new AxeBuilder({ page }).analyze();
@@ -69,4 +71,11 @@ test("390px layouts do not overflow and keep controls usable", async ({ page }, 
   await page.goto("/");
   const box = await page.getByRole("link", { name: /Try it with sample data/ }).boundingBox();
   expect(box?.height).toBeGreaterThanOrEqual(44);
+  const facts = page.locator(".proof-points li");
+  await expect(facts).toHaveCount(3);
+  const lastFact = await facts.last().boundingBox();
+  expect((lastFact?.y || 0) + (lastFact?.height || 0)).toBeLessThanOrEqual(844);
+  await expect(page.getByText("No payment or account.")).toBeVisible();
+  await expect(page.getByText("Reloads offline after the first visit.")).toBeVisible();
+  await expect(page.getByText("Real measurements contact npm directly.")).toBeVisible();
 });

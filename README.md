@@ -1,20 +1,21 @@
 # Package Cost Explorer
 
-Package Cost Explorer measures npm install size and bundle size for each
+Package Cost Explorer measures installed size and bundle size for each npm
 package entry point. It is for frontend and Node developers choosing a
 dependency.
 
 Open the one-click sample at `/demo` or `/?demo=1`. The demo uses fixed
 `date-fns@4.1.0` data, makes no npm request, and saves no report. Resetting the
-demo clears only the reserved `demo:` storage namespace.
+demo removes only browser-storage keys that start with `demo:`.
 
-Real measurements contact npm directly. The site is free and uses no account,
-analytics, tracking cookies, or saved reports. Its interface reloads offline
-after the first visit. New package measurements still require npm.
+Real measurements download public package files from npm and complete in this
+browser. The site uses no account, payment, analytics, tracking cookies, or
+saved reports. Its interface reloads offline after the first visit. New package
+measurements still require npm.
 
 A completed report includes installed size, production dependency count, and
-compressed JavaScript size for each package entry point. It can copy a report
-link and an SVG badge for the measured package. Figures are estimates, so
+bundle size for each package entry point. It can copy a report link and an SVG
+badge for the measured package. Figures are estimates, so
 confirm important decisions in your own application build.
 
 ## Run locally

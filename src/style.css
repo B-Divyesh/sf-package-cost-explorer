@@ -189,12 +189,14 @@ thead th { color: var(--muted); font-size: 11px; letter-spacing: .1em; text-tran
   .masthead { align-items: start; flex-direction: column; gap: 0; padding-block: 8px; }
   .site-nav { width: 100%; justify-content: space-between; }
   .site-nav a { min-width: 44px; justify-content: center; }
-  .hero-copy { padding-inline: 20px; }
-  .hero-copy h1 { font-size: clamp(40px, 12vw, 52px); }
+  .hero-copy { padding-top: 28px; padding-inline: 20px; padding-bottom: 24px; }
+  .hero-copy h1 { font-size: clamp(38px, 10.6vw, 48px); }
+  .hero-copy .kicker { margin-bottom: 8px; }
+  .hero-copy .lede { margin: 14px 0 18px; font-size: 18px; line-height: 1.42; }
   .demo-cta { align-items: stretch; flex-direction: column; gap: 8px; }
   .demo-cta .primary-button { width: 100%; }
   .search-row { grid-template-columns: 1fr; gap: 8px; }
-  .proof-points { display: grid; grid-template-columns: 1fr; gap: 8px; }
+  .proof-points { display: grid; grid-template-columns: 1fr; gap: 6px; margin: 18px 0 20px; padding-top: 12px; font-size: 11px; }
   .hero-art img { min-height: 220px; }
   .hero-art figcaption { position: static; max-width: none; }
   .analysis-status { grid-template-columns: 1fr; }
