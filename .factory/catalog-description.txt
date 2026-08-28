@@ -1,0 +1,1 @@
+Compare npm install and per-entry bundle sizes before adding a dependency.

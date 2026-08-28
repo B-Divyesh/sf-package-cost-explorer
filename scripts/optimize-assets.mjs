@@ -15,3 +15,13 @@ await Promise.all(
     else await image.webp({ quality: Number(quality), effort: 6 }).toFile(String(path));
   }),
 );
+
+await sharp(source)
+  .resize({ width: 1200, height: 630, fit: "cover", position: "centre" })
+  .jpeg({ quality: 82, mozjpeg: true })
+  .toFile("public/assets/social-card.jpg");
+
+await sharp("public/favicon.svg")
+  .resize(180, 180)
+  .png({ compressionLevel: 9 })
+  .toFile("public/apple-touch-icon.png");

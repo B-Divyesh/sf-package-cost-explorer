@@ -22,14 +22,14 @@ try {
 
   consoleErrors.length = 0;
   await page.getByLabel("Package and version").fill(missingName);
-  await page.getByRole("button", { name: /Run the numbers/ }).click();
+  await page.getByRole("button", { name: "Measure this package" }).click();
   await page.waitForFunction(() => document.querySelector("#package-error")?.textContent?.includes("npm has no published package"));
   if (consoleErrors.some((message) => /Failed to load resource.*404/i.test(message))) {
     throw new Error(`missing-package recovery produced a console 404: ${consoleErrors.join(" | ")}`);
   }
 
   await page.getByLabel("Package and version").fill("nanoid@5.1.5");
-  await page.getByRole("button", { name: /Run the numbers/ }).click();
+  await page.getByRole("button", { name: "Measure this package" }).click();
   await page.locator("#badge-link").waitFor({ state: "visible", timeout: 120_000 });
   const badgeUrl = await page.locator("#badge-link").getAttribute("href");
   if (!badgeUrl?.startsWith(`${origin}/badge.svg?`)) throw new Error(`UI did not generate a badge URL for ${origin}`);

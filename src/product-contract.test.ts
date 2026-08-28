@@ -13,7 +13,7 @@ describe("static product contract", () => {
     expect(html).not.toMatch(/user-scalable=no/);
   });
   it("renders a single explorer h1 and semantic landmarks", () => {
-    const explorer = source.slice(source.indexOf("function renderExplorer"), source.indexOf("interface AppState"));
+    const explorer = source.slice(source.indexOf("function renderHome"), source.indexOf("function seedDemo"));
     expect(explorer.match(/<h1\b/g)).toHaveLength(1);
     expect(explorer).toContain('<main id="main">');
     expect(source).toContain('<header class="masthead">');
@@ -41,5 +41,13 @@ describe("static product contract", () => {
     expect(vite).toContain("package-ledger-shell-${buildId}");
     expect(vite).toContain("local-badge-worker");
     expect(vite).toContain('url.pathname === "/badge.svg"');
+  });
+  it("ships a direct, isolated demo and route-aware metadata", () => {
+    expect(source).toContain("Demo — sample data, nothing is saved");
+    expect(source).toContain('get("demo") === "1"');
+    expect(source).toContain('key?.startsWith("demo:")');
+    expect(source).toContain('title: "Page not found — Package Cost Explorer"');
+    expect(html).toContain('property="og:image"');
+    expect(html).toContain('rel="apple-touch-icon"');
   });
 });

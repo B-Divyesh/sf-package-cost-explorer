@@ -35,7 +35,7 @@ function versionedServiceWorker(buildId: string): Plugin {
     generateBundle(_options, bundle) {
       const shell = ["/", "/index.html", "/manifest.webmanifest", "/favicon.svg", "/assets/package-ledger-800.webp"];
       for (const output of Object.values(bundle)) {
-        if (output.type === "chunk" && output.isEntry) shell.push(`/${output.fileName}`);
+        if (output.type === "chunk") shell.push(`/${output.fileName}`);
         if (output.type === "asset" && output.fileName.endsWith(".css")) shell.push(`/${output.fileName}`);
       }
       const source = `/* generated at build time: ${buildId} */
@@ -51,13 +51,13 @@ self.addEventListener("fetch", (event) => {
   const url = new URL(event.request.url);
   if (event.request.method !== "GET" || url.origin !== location.origin || url.pathname.startsWith("/api/") || url.pathname === "/badge.svg") return;
   if (event.request.mode === "navigate") {
-    event.respondWith(fetch(event.request).then((response) => {
+    event.respondWith(caches.match("/index.html").then((cached) => cached || fetch(event.request).then((response) => {
       if (response.ok) caches.open(CACHE).then((cache) => cache.put("/index.html", response.clone()));
       return response;
-    }).catch(() => caches.match("/index.html").then((response) => response || caches.match("/"))));
+    })));
     return;
   }
-  event.respondWith(caches.match(event.request).then((cached) => cached || fetch(event.request).then((response) => {
+  event.respondWith(caches.match(url.pathname, { ignoreSearch: true, ignoreVary: true }).then((cached) => cached || fetch(event.request).then((response) => {
     if (response.ok) caches.open(CACHE).then((cache) => cache.put(event.request, response.clone()));
     return response;
   })));

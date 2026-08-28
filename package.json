@@ -15,6 +15,10 @@
     "test:live": "node scripts/live-check.mjs",
     "test:watch": "vitest",
     "test:e2e": "playwright test",
+    "test:claims": "playwright test e2e/claims.e2e.ts --project=desktop",
+    "test:accessibility": "playwright test e2e/product.e2e.ts --grep accessible",
+    "test:privacy": "playwright test e2e/claims.e2e.ts --project=desktop --grep \"@claim:(demo-isolation|no-account-analytics|npm-direct)\"",
+    "test:offline": "playwright test e2e/claims.e2e.ts --project=desktop --grep @claim:offline-reload",
     "assets": "node scripts/optimize-assets.mjs"
   },
   "dependencies": {
@@ -25,7 +29,7 @@
   },
   "devDependencies": {
     "@axe-core/playwright": "^4.13.0",
-    "@playwright/test": "^1.62.1",
+    "@playwright/test": "1.58.2",
     "@types/node": "^24.3.0",
     "@types/semver": "^7.7.0",
     "jsdom": "^26.1.0",
