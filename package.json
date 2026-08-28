@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc --noEmit && vite build",
+    "build": "npm ci --prefix api && tsc --noEmit && vite build",
     "preview": "vite preview",
     "test": "vitest run && npm run test:badge-worker",
     "test:export-scale": "vitest run src/export-scale.test.ts",
