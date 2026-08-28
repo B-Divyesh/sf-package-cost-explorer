@@ -4,7 +4,9 @@
 
 The release repair is deployed. Product code was committed and pushed as
 `e40f70dd23e7bbde28fdb72f9b5091688bcb9f4e` (`fix: close review two claim and
-mobile gaps`) and is live at <https://package-cost-explorer.sociobot.in>.
+mobile gaps`) and `1f80fe8482a819103ab3323e74fd4ea7d1ee698a` (`fix: install
+badge function dependencies for deploy`). Both are live at
+<https://package-cost-explorer.sociobot.in>.
 The live HTML references `assets/index-B5uTgNIl.js`, the build produced by that
 commit.
 
@@ -21,6 +23,8 @@ commit.
 - Kept demo mode memory-only with reset/exit controls; clarified storage copy.
 - Completed the standalone server 404 shell with metadata, skip link,
   navigation, footer, and legal links.
+- Made `npm run build` install the managed badge function dependencies before
+  the static upload, preventing a future `/badge.svg` deployment regression.
 
 ## Verification
 
@@ -56,6 +60,8 @@ Live post-deploy evidence is in `/tmp/pce-polish2-live/`:
   `screenshot-desktop.png` / `screenshot-mobile.png`.
 - Lighthouse mobile report: Performance 100, Accessibility 100, LCP 1,278 ms,
   CLS 0 (`/tmp/pce-polish2-live/lighthouse-mobile.json`).
+- `npm run test:live` passed after the final deployment: clean profile,
+  missing-package recovery, query-aware SVG badge, and manifest MIME.
 
 ## Remaining work
 

@@ -1,7 +1,8 @@
 # Polish 2 — review finding closure
 
-Repair commit: `e40f70dd23e7bbde28fdb72f9b5091688bcb9f4e`  
-Live URL: <https://package-cost-explorer.sociobot.in>  
+Repair commits: `e40f70dd23e7bbde28fdb72f9b5091688bcb9f4e`, `1f80fe8482a819103ab3323e74fd4ea7d1ee698a`
+
+Live URL: <https://package-cost-explorer.sociobot.in>
 Evidence directory: `/tmp/pce-polish2-live/`
 
 | Finding ID | Change made | Evidence |
@@ -24,4 +25,6 @@ Evidence directory: `/tmp/pce-polish2-live/`
 
 Historical badge and manifest defects recorded in the earlier verification
 reports remain covered by the clean-clone browser suite and the deployed badge
-route; no earlier review finding remains open.
+route. The final deploy additionally installs `api/` dependencies from
+`npm run build`; `npm run test:live` passed after deployment. No earlier review
+finding remains open.
