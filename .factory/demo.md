@@ -4,7 +4,9 @@
 - Sample: a completed `date-fns@4.1.0` report with installed size, production
   dependency count, three package entry points, bundle sizes, named imports,
   and version history.
-- Reset: choose **Reset demo** in the persistent demo banner.
+- Reset: choose **Reset demo** in the persistent demo banner. The banner and
+  both controls remain on screen while a phone visitor scrolls through the
+  report.
 - Exit: choose **Start for real**. The real package form opens empty.
 - Isolation: sample state exists only in JavaScript memory. Reset removes only
   browser-storage keys that start with `demo:`. The demo never reads or writes
