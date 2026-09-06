@@ -1,26 +1,28 @@
-# Review 3 handoff
+# Review 4 handoff
 
 ## Outcome
 
-No product code was changed. The reviewer added .factory/review-3.md and
-updated this handoff. The independent result is **PASS** at revision
-9d67a9ce17a035333fc601528a2a45df107b14f4 against
-https://package-cost-explorer.sociobot.in.
+No product code was changed. Review 4 is **FAIL** with one P3 accessibility
+finding at the live URL: activating “Skip to main content” changes the hash but
+does not move keyboard focus into main. The detailed evidence is in
+`.factory/review-4.md`.
 
-## What was verified
+The reviewed implementation is `1f80fe8`; the report/documentation revision is
+`ef9756724e59270007f16e601d40679eb4173585`. Production JS and CSS exactly
+match the clean candidate build.
 
-- Cold desktop and 390 × 844 contexts clearly established the job, audience,
-  and first action. The mobile screen had no horizontal overflow or console
-  errors.
-- The one-click demo showed a populated date-fns@4.1.0 report, persistent demo
-  banner, working reset/exit, isolated storage, same-origin network behavior,
-  and offline reload.
-- A live nanoid@5.1.5 measurement completed with three entries and a
-  query-aware 200 image/svg+xml badge.
-- Home, Demo, Privacy, Terms, and the 404 were checked for metadata, links,
-  focus behavior, announcement, header/footer, and Axe serious/critical issues.
-- All Review 1 and Review 2 findings were confirmed fixed against live behavior
-  and source, not merely marked fixed.
+## What passed
+
+- Fresh desktop and phone first-read checks clearly established job, audience,
+  and the sample action; phone overflow was zero.
+- Demo, reset, exit, storage/network isolation, offline reload, real normal,
+  invalid, missing-package recovery, large exports-map boundary, sharing, and
+  legal/404 routes passed.
+- All six declared claim commands, `npm test`, `npm run build`, full E2E,
+  PWA-update, live, and production-audit checks passed from a clean clone.
+- Live Axe scans found no serious or critical issues on Home, Demo, Privacy,
+  Terms, or 404. The remaining keyboard focus defect is outside that severity
+  threshold and must still be repaired.
 
 ## How to verify
 
@@ -29,6 +31,9 @@ From a clean clone:
     npm ci
     npm test
     npm run build
+    npm run test:e2e
+    npm run test:pwa-update
+    npm run test:live
     npx playwright test e2e/claims.e2e.ts --project=desktop --grep @claim:sample-report
     npx playwright test e2e/claims.e2e.ts --project=desktop --grep @claim:demo-isolation
     npx playwright test e2e/claims.e2e.ts --project=desktop --grep @claim:offline-reload
@@ -36,11 +41,12 @@ From a clean clone:
     npx playwright test e2e/claims.e2e.ts --project=desktop --grep @claim:no-account-analytics
     npx playwright test e2e/claims.e2e.ts --project=desktop --grep @claim:report-sharing
 
-All commands passed in /tmp/pce-review3-clean. npm test passed 24 Vitest tests
-and two badge-worker tests; npm run build produced dist; all six claim commands
-passed. Full evidence and the complete copy audit are in .factory/review-3.md.
+Also activate the first Tab-focused skip link with Enter and assert focus moves
+to `#main` or its heading. Do this on the static 404 as well.
 
 ## Remaining work
 
-None identified. This was a review-only change; no deployment, DNS, billing, or
-product behavior was modified.
+Make the main target focusable and focus it after skip-link activation across
+the app and static 404, then add and run a keyboard regression test. This was a
+review-only change; no deployment, DNS, billing, or product behavior was
+modified.
