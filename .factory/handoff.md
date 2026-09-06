@@ -1,52 +1,81 @@
-# Review 4 handoff
+# Repair 5 handoff
 
 ## Outcome
 
-No product code was changed. Review 4 is **FAIL** with one P3 accessibility
-finding at the live URL: activating “Skip to main content” changes the hash but
-does not move keyboard focus into main. The detailed evidence is in
-`.factory/review-4.md`.
+Repair 5 is complete and deployed at
+<https://package-cost-explorer.sociobot.in>. The review 4 skip-link finding is
+fixed, every declared claim passes, and no earlier finding is open.
 
-The reviewed implementation is `1f80fe8`; the report/documentation revision is
-`ef9756724e59270007f16e601d40679eb4173585`. Production JS and CSS exactly
-match the clean candidate build.
+- Deployed implementation: `850a0275ea87e512d0867fe2b07b956e507ac9d0`
+- Verification documentation: `dfed093affdf6576cf9fc1a614177e0e8eb4e354`
+- Full evidence report: `.factory/repair-5.md`
 
-## What passed
+This handoff is a later documentation-only change. The live HTML exposes the
+implementation SHA above, and its JavaScript and CSS hashes match that build.
 
-- Fresh desktop and phone first-read checks clearly established job, audience,
-  and the sample action; phone overflow was zero.
-- Demo, reset, exit, storage/network isolation, offline reload, real normal,
-  invalid, missing-package recovery, large exports-map boundary, sharing, and
-  legal/404 routes passed.
-- All six declared claim commands, `npm test`, `npm run build`, full E2E,
-  PWA-update, live, and production-audit checks passed from a clean clone.
-- Live Axe scans found no serious or critical issues on Home, Demo, Privacy,
-  Terms, or 404. The remaining keyboard focus defect is outside that severity
-  threshold and must still be repaired.
+## What changed
 
-## How to verify
+- Made the `#main` landmark focusable on Home, Demo, Privacy, Terms, the SPA
+  not-found state, and the standalone 404.
+- Added an outcome-based Playwright regression that activates the skip link
+  with Enter, checks that focus reaches main, and checks that the next Tab does
+  not return to repeated header navigation.
+- Preserved the report, demo sandbox, claims, privacy behavior, visual system,
+  worker-backed badge, and service-worker update path.
 
-From a clean clone:
+## Verification
 
-    npm ci
-    npm test
-    npm run build
-    npm run test:e2e
-    npm run test:pwa-update
-    npm run test:live
-    npx playwright test e2e/claims.e2e.ts --project=desktop --grep @claim:sample-report
-    npx playwright test e2e/claims.e2e.ts --project=desktop --grep @claim:demo-isolation
-    npx playwright test e2e/claims.e2e.ts --project=desktop --grep @claim:offline-reload
-    npx playwright test e2e/claims.e2e.ts --project=desktop --grep @claim:npm-direct
-    npx playwright test e2e/claims.e2e.ts --project=desktop --grep @claim:no-account-analytics
-    npx playwright test e2e/claims.e2e.ts --project=desktop --grep @claim:report-sharing
+From clean clone `/tmp/pce-repair5-clean-LamUDN/repo`:
 
-Also activate the first Tab-focused skip link with Enter and assert focus moves
-to `#main` or its heading. Do this on the static 404 as well.
+```text
+npm ci: PASS; 0 vulnerabilities
+npm test: PASS; 24 Vitest tests and 2 badge-worker tests
+npm run build: PASS; dist/index.html produced
+npm run test:e2e: PASS; 22 passed, 2 expected device skips
+npm run test:pwa-update: PASS
+npm run test:accessibility: PASS; 4 Axe-backed checks
+npm run test:privacy: PASS; 3 checks
+npm run test:offline: PASS
+npm audit --omit=dev: PASS; 0 vulnerabilities
+npm audit --prefix api --omit=dev: PASS; 0 vulnerabilities
+```
 
-## Remaining work
+All six `.factory/claims.json` commands were also run separately and passed:
+`sample-report`, `demo-isolation`, `offline-reload`, `npm-direct`,
+`no-account-analytics`, and `report-sharing`.
 
-Make the main target focusable and focus it after skip-link activation across
-the app and static 404, then add and run a keyboard regression test. This was a
-review-only change; no deployment, DNS, billing, or product behavior was
-modified.
+Live checks passed for fresh desktop and 390 × 844 phone profiles, the
+one-click sample, reset, exit, real-storage isolation, invalid input,
+missing-package recovery, `nanoid@5.1.5`, the 741-entry `date-fns@4.1.0`
+boundary, route titles, legal pages, deliberate 404, reduced motion, privacy,
+badge GET, manifest MIME, and offline/update behavior. Live Axe found zero
+serious or critical findings. The factory URL verifier found no console or
+structure error.
+
+Lighthouse mobile scored 99 Performance and 100 Accessibility, with FCP and
+LCP at 1.71 seconds, CLS 0, and TBT 0 ms. Initial app JS is 78.66 kB / 28.41 kB
+gzip; CSS is 16.72 kB / 4.43 kB gzip.
+
+Evidence is under `/work/.evidence/repair-5-live`,
+`/work/.evidence/repair-5-local`, and `/work/.evidence/repair-5-url`.
+`.factory/catalog-description.txt` is verb-first and under 120 characters; an
+identical copy is at `/work/.evidence/catalog-description.txt`.
+
+## Deploy again
+
+```sh
+BUILD_REVISION=<implementation-sha> npm run build
+swa deploy dist --api-location api --api-language node --api-version 22 \
+  --app-name sf-package-cost-explorer --resource-group sociobot \
+  --env production --swa-config-location dist --no-use-keychain
+```
+
+This uses the existing production Static Web App and adjacent stateless badge
+function. Do not change DNS, billing, or unrelated resources.
+
+## Remaining limits
+
+No repair work remains. Measurements still depend on public npm and retain the
+plainly disclosed v1 exclusions for stylesheets, static assets, optional native
+modules, and external package contracts. The product is free; no billing offer
+or billing metadata is required.
