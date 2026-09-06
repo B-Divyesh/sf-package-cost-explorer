@@ -17,6 +17,7 @@
 
 * { box-sizing: border-box; }
 html { background: #d8d5cc; scroll-behavior: smooth; }
+html.restoring-scroll { scroll-behavior: auto; }
 body { margin: 0; min-width: 320px; min-height: 100vh; background: #d8d5cc; font-size: 16px; line-height: 1.5; }
 button, input { font: inherit; }
 button, a { -webkit-tap-highlight-color: transparent; }
@@ -30,7 +31,7 @@ code { font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace; fo
 :focus-visible { outline: 3px solid var(--cyan); outline-offset: 3px; }
 .masthead { min-height: 64px; padding: 10px clamp(20px, 4vw, 56px); border-bottom: 4px double var(--ink); display: flex; align-items: center; justify-content: space-between; gap: 24px; font-size: 12px; letter-spacing: .08em; text-transform: uppercase; }
 .masthead p { margin: 0; color: var(--muted); }
-.wordmark { display: flex; align-items: center; gap: 10px; color: var(--ink); font-weight: 800; text-decoration: none; letter-spacing: .04em; }
+.wordmark { display: flex; align-items: center; min-width: 44px; min-height: 44px; gap: 10px; color: var(--ink); font-weight: 800; text-decoration: none; letter-spacing: .04em; }
 .wordmark span { color: var(--cyan); font-size: 18px; }
 .site-nav { display: flex; align-items: center; gap: clamp(12px, 2.4vw, 28px); }
 .site-nav a { min-height: 44px; display: inline-flex; align-items: center; color: var(--ink); font-weight: 800; text-decoration: underline; text-decoration-color: var(--cyan); }
@@ -58,7 +59,7 @@ input[type="text"], .search-row input { min-width: 0; min-height: 56px; padding:
 .demo-cta > span { max-width: 24ch; color: var(--muted); font-size: 14px; }
 .field-note { margin: 8px 0 0; color: var(--muted); font-size: 13px; }
 .field-error { min-height: 24px; margin: 6px 0 0; color: var(--danger); font-weight: 700; }
-.inline-example { min-height: 32px; padding: 2px; border: 0; background: none; color: var(--cyan); font-weight: 700; text-decoration: underline; text-underline-offset: 3px; }
+.inline-example { min-width: 44px; min-height: 44px; margin-block: -6px; padding: 6px 2px; border: 0; background: none; color: var(--cyan); font-weight: 700; text-decoration: underline; text-underline-offset: 3px; }
 .proof-points { display: flex; gap: 18px; margin: 30px 0 0; padding: 18px 0 0; border-top: 1px solid #747873; list-style: none; font-size: 12px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; }
 .proof-points span { color: var(--cyan); margin-right: 4px; }
 .hero-art { position: relative; min-width: 0; margin: 0; border-left: 2px solid var(--ink); background: var(--ink); overflow: hidden; }
@@ -152,7 +153,8 @@ thead th { color: var(--muted); font-size: 11px; letter-spacing: .1em; text-tran
 .scope-copy p { max-width: 60ch; margin: 0; }
 .footer { display: grid; grid-template-columns: 1fr auto; gap: 8px 32px; padding: 28px clamp(20px, 5vw, 72px); color: var(--muted); font-size: 12px; }
 .footer p { margin: 0; }
-.footer nav { display: flex; gap: 20px; }
+.footer nav { display: flex; flex-wrap: wrap; gap: 8px 20px; }
+.footer nav a, .legal-page .text-link, .not-found-actions .text-link { display: inline-flex; align-items: center; min-width: 44px; min-height: 44px; }
 .generated-note { grid-column: 1 / -1; }
 .legal-page { min-height: 70vh; padding: clamp(48px, 8vw, 100px) clamp(20px, 10vw, 150px); border-bottom: 4px double var(--ink); }
 .legal-page h1 { max-width: 850px; }
@@ -218,8 +220,11 @@ thead th { color: var(--muted); font-size: 11px; letter-spacing: .1em; text-tran
   .footer { grid-template-columns: 1fr; }
   .footer nav { grid-row: 1; }
   .generated-note { grid-column: auto; }
-  .demo-banner { position: static; grid-template-columns: 1fr; gap: 6px; }
-  .demo-banner > div { display: grid; grid-template-columns: 1fr 1fr; }
+  .demo-banner { position: sticky; grid-template-columns: 1fr auto; gap: 4px 8px; padding-block: 6px; }
+  .demo-banner strong { align-self: center; font-size: 13px; line-height: 1.25; }
+  .demo-banner .demo-status { grid-column: 1; font-size: 13px; }
+  .demo-banner > div { grid-column: 2; grid-row: 1 / span 2; display: grid; grid-template-columns: 1fr; gap: 4px; }
+  .demo-banner .quiet-button { min-height: 44px; padding: 7px 10px; font-size: 13px; }
   .demo-intro { padding-top: 28px; }
   .demo-intro h1 { font-size: 40px; }
   .not-found-actions { align-items: stretch; flex-direction: column; }

@@ -70,8 +70,8 @@ self.addEventListener("fetch", (event) => {
       // with a versioned start URL once the output directory is complete.
       const manifest = {
         name: "Package Cost Explorer",
-        short_name: "Pkg Ledger",
-        description: "A private, exports-aware npm package cost ledger.",
+        short_name: "Package Cost Explorer",
+        description: "Compare installed size and bundle size for npm package entry points.",
         start_url: `/?v=${buildId}`,
         display: "standalone",
         background_color: "#f1efe8",

@@ -26,6 +26,14 @@ interface AppState {
 
 const state: AppState = { entries: [], measurements: [], named: [], history: [], downloaded: 0, demo: false };
 
+interface NavigationState {
+  packageCostScrollX?: number;
+  packageCostScrollY?: number;
+}
+
+let restoringScroll = false;
+let scrollFrame = 0;
+
 const demoState = {
   manifest: {
     name: "date-fns",
@@ -128,6 +136,7 @@ function renderHome() {
 
 function seedDemo() {
   state.controller?.abort();
+  state.controller = undefined;
   Object.assign(state, demoState, { demo: true, downloaded: 1_042_318, archive: undefined, packument: undefined });
 }
 
@@ -141,18 +150,31 @@ function renderDemo() {
 
 function renderLegal(kind: "privacy" | "terms") {
   const privacy = kind === "privacy";
-  app.innerHTML = shell(`<main id="main" class="legal-page" tabindex="-1"><p class="kicker">Policy desk / Effective 28 August 2026</p><h1 tabindex="-1">${privacy ? "Privacy in plain words." : "Terms of use."}</h1>
+  app.innerHTML = shell(`<main id="main" class="legal-page" tabindex="-1"><p class="kicker">Effective 28 August 2026</p><h1 tabindex="-1">${privacy ? "Privacy in plain words." : "Terms of use."}</h1>
     ${privacy ? `<p class="lede">Package Cost Explorer uses no account, payment, analytics, tracking cookies, or saved reports.</p><h2>Real package measurements</h2><p>When you measure a real package, your browser requests public package details and files directly from npm. npm may record those requests under its own privacy terms.</p><h2>Sample report</h2><p>The demo uses fixed sample data. It does not contact npm or read or write browser storage.</p><h2>Offline page</h2><p>After one visit, a service worker caches the interface so it can reload offline. A new real measurement still needs npm.</p><h2>Your control</h2><p>Clear this site’s storage to remove the cached interface. Shared result URLs include a public package name and version.</p>` : `<p class="lede">Package Cost Explorer provides estimates for dependency choices. Confirm important figures in your own application build.</p><h2>What the estimate covers</h2><p>The report measures published JavaScript for a browser target. Build settings, shared code, package changes, and network failures can change a result.</p><h2>What you must check</h2><p>Review package licenses, security, and suitability yourself. Do not use this site to overload npm or inspect private packages.</p><h2>No warranty</h2><p>The software is provided “as is,” without warranty. The repository license governs reuse of the source code.</p>`}
     <p><a class="text-link" href="/" data-route>← Return to package measurement</a></p></main>`);
 }
 
 function renderNotFound() {
-  app.innerHTML = shell(`<main id="main" class="not-found" tabindex="-1"><p class="error-code" aria-hidden="true">404</p><p class="kicker">Misfiled package page</p><h1 tabindex="-1">This package page does not exist.</h1><p>The address may be incomplete or out of date.</p><div class="not-found-actions"><a class="primary-button" href="/" data-route>Return home</a><a class="text-link" href="/demo" data-route>Open the sample report</a></div></main>`);
+  app.innerHTML = shell(`<main id="main" class="not-found" tabindex="-1"><p class="error-code" aria-hidden="true">404</p><p class="kicker">Page not found</p><h1 tabindex="-1">This package page does not exist.</h1><p>The address may be incomplete or out of date.</p><div class="not-found-actions"><a class="primary-button" href="/" data-route>Return home</a><a class="text-link" href="/demo" data-route>Open the sample report</a></div></main>`);
 }
 
-function renderRoute(focusHeading = false) {
+function historyPosition(value: unknown = history.state): { x: number; y: number } {
+  const saved = (value && typeof value === "object" ? value : {}) as NavigationState;
+  return { x: saved.packageCostScrollX || 0, y: saved.packageCostScrollY || 0 };
+}
+
+function rememberScroll() {
+  if (restoringScroll) return;
+  const current = (history.state && typeof history.state === "object" ? history.state : {}) as NavigationState;
+  history.replaceState({ ...current, packageCostScrollX: window.scrollX, packageCostScrollY: window.scrollY }, "");
+}
+
+function renderRoute(focusHeading = false, position = { x: 0, y: 0 }) {
+  if (focusHeading) { restoringScroll = true; document.documentElement.classList.add("restoring-scroll"); }
   const route = currentRoute();
   state.controller?.abort();
+  state.controller = undefined;
   setMeta(route);
   if (route === "home") renderHome();
   else if (route === "demo") renderDemo();
@@ -160,15 +182,24 @@ function renderRoute(focusHeading = false) {
   else renderNotFound();
   document.querySelector("#reload-update")?.addEventListener("click", () => location.reload());
   if (focusHeading) {
-    window.scrollTo(0, 0);
     const heading = document.querySelector<HTMLHeadingElement>("h1");
     heading?.focus({ preventScroll: true });
     const status = document.querySelector<HTMLElement>("#route-status");
     if (status && heading) status.textContent = `${heading.textContent} page loaded.`;
+    requestAnimationFrame(() => {
+      const scrollRoot = document.scrollingElement;
+      if (scrollRoot) { scrollRoot.scrollLeft = position.x; scrollRoot.scrollTop = position.y; }
+      else window.scrollTo(position.x, position.y);
+      requestAnimationFrame(() => { document.documentElement.classList.remove("restoring-scroll"); restoringScroll = false; rememberScroll(); });
+    });
   }
 }
 
-function navigate(href: string) { history.pushState(null, "", href); renderRoute(true); }
+function navigate(href: string) {
+  rememberScroll();
+  history.pushState({ packageCostScrollX: 0, packageCostScrollY: 0 } satisfies NavigationState, "", href);
+  renderRoute(true);
+}
 
 function bindOnlineState() {
   const update = () => {
@@ -213,16 +244,18 @@ function setStatus(title: string, detail: string, progress: number) {
 async function analyze(raw: string) {
   const error = document.querySelector<HTMLElement>("#package-error")!;
   const results = document.querySelector<HTMLElement>("#results")!;
+  const previousReportVisible = !results.hidden && Boolean(results.querySelector("#results-title"));
   error.textContent = "";
+  let controller: AbortController | undefined;
   try {
     const spec = parsePackageSpec(raw);
     if (!navigator.onLine) throw new Error("You are offline. Reconnect before measuring a new package.");
-    state.controller?.abort(); const controller = new AbortController(); state.controller = controller; results.hidden = true;
+    state.controller?.abort(); controller = new AbortController(); state.controller = controller;
+    if (!previousReportVisible) results.hidden = true;
     setStatus("Checking npm for this package…", `Confirming ${spec.name} before downloading its public files.`, 5);
     await confirmPublicPackage(spec.name, controller.signal);
     setStatus("Reading package details…", `Resolving ${spec.name}@${spec.requested} on npm.`, 8);
     const packument = await fetchPackument(spec.name, controller.signal); const manifest = resolveManifest(packument, spec.requested); const canonical = `${manifest.name}@${manifest.version}`;
-    history.replaceState(null, "", `/?q=${encodeURIComponent(canonical)}`); document.querySelector<HTMLInputElement>("#package-input")!.value = canonical;
     setStatus("Reading package files…", "Opening the published package and its package.json file.", 22);
     let dependencyProgress = 0;
     const dependenciesPromise = countDependencies(manifest, controller.signal, (count) => { dependencyProgress = count; setStatus("Counting production dependencies…", `${count} package versions counted.`, Math.min(52, 28 + count / 10)); });
@@ -230,12 +263,26 @@ async function analyze(raw: string) {
     setStatus("Measuring package entry points…", `Measuring ${entries.length.toLocaleString()} ${entries.length === 1 ? "entry point" : "entry points"}.`, 55);
     const bundlePromise = bundleEntries(archive, entries, controller.signal, (done, total, label) => setStatus("Measuring package entry points…", done === total ? "Compressing the final figures." : `Measuring ${label} (${done + 1}/${total}). Dependencies counted: ${dependencyProgress}.`, 55 + (done / Math.max(1, total)) * 38));
     const [dependencies, bundles] = await Promise.all([dependenciesPromise, bundlePromise]);
+    if (state.controller !== controller) return;
     Object.assign(state, { packument, manifest: completeManifest, archive, entries, dependencies, history: versionHistory(packument), measurements: bundles.measurements, named: bundles.named, downloaded: bundles.downloaded, demo: false });
+    history.replaceState({ ...(history.state || {}) }, "", `/?q=${encodeURIComponent(canonical)}`); document.querySelector<HTMLInputElement>("#package-input")!.value = canonical;
     setStatus("Package report complete.", `${canonical} was measured in this browser tab.`, 100); renderResults();
-    window.setTimeout(() => { document.querySelector<HTMLElement>("#analysis-status")!.hidden = true; }, 450);
+    state.controller = undefined;
+    window.setTimeout(() => { if (!state.controller) document.querySelector<HTMLElement>("#analysis-status")!.hidden = true; }, 450);
   } catch (caught) {
-    error.textContent = (caught as Error).name === "AbortError" ? "Measurement cancelled. Your previous report is unchanged." : (caught as Error).message || "The package could not be measured. Try another version.";
-    document.querySelector<HTMLElement>("#analysis-status")!.hidden = true; document.querySelector<HTMLInputElement>("#package-input")!.focus();
+    if (controller && state.controller !== controller) return;
+    const cancelled = (caught as Error).name === "AbortError";
+    error.textContent = cancelled
+      ? previousReportVisible ? "Measurement cancelled. The previous report remains available." : "Measurement cancelled. No report was created."
+      : (caught as Error).message || "The package could not be measured. Try another version.";
+    document.querySelector<HTMLElement>("#analysis-status")!.hidden = true;
+    if (cancelled && previousReportVisible) {
+      results.hidden = false;
+      document.querySelector<HTMLElement>("#results-title")?.focus({ preventScroll: true });
+    } else {
+      document.querySelector<HTMLInputElement>("#package-input")!.focus();
+    }
+    if (controller) state.controller = undefined;
   }
 }
 
@@ -254,7 +301,7 @@ function chart(points: VersionPoint[]): string {
 function renderResults(scroll = true) {
   const results = document.querySelector<HTMLElement>("#results")!; const { manifest, entries, measurements, dependencies, named } = state; if (!manifest || !dependencies) return;
   const externals = [...new Set(measurements.flatMap((measurement) => measurement.externals))]; const warnings = [...new Set(measurements.flatMap((measurement) => measurement.warnings))]; const likelyNode = externals.some((name) => !name.includes("peer"));
-  results.innerHTML = `<div class="result-head"><div><p class="kicker">${state.demo ? "Sample package report" : "Completed package report"}</p><h2 id="results-title">${escapeHtml(manifest.name)} <span>${escapeHtml(manifest.version)}</span></h2><p>${escapeHtml(manifest.description || "The publisher provided no package description.")}</p></div><div class="report-stamp"><span>${state.demo ? "Fixed sample" : "Measured here"}</span><strong>${state.demo ? "Demo data" : new Date().toLocaleDateString(undefined, { day: "2-digit", month: "short", year: "numeric" })}</strong></div></div>
+  results.innerHTML = `<div class="result-head"><div><p class="kicker">${state.demo ? "Sample package report" : "Completed package report"}</p><h2 id="results-title" tabindex="-1">${escapeHtml(manifest.name)} <span>${escapeHtml(manifest.version)}</span></h2><p>${escapeHtml(manifest.description || "The publisher provided no package description.")}</p></div><div class="report-stamp"><span>${state.demo ? "Fixed sample" : "Measured here"}</span><strong>${state.demo ? "Demo data" : new Date().toLocaleDateString(undefined, { day: "2-digit", month: "short", year: "numeric" })}</strong></div></div>
     ${state.demo ? `<p class="sample-note"><strong>Sample figures.</strong> These fixed values demonstrate the report and are not a current measurement.</p>` : ""}
     <div class="fact-strip"><div><span>${dependencies.capped ? "Installed size (minimum)" : "Installed size"}</span><strong>${formatBytes(dependencies.unpackedBytes)}</strong><small>${dependencies.capped ? "Package count limit reached" : `${formatBytes(manifest.dist?.unpackedSize)} package alone`}</small></div><div><span>Production dependencies</span><strong>${dependencies.unique.toLocaleString()}</strong><small>${dependencies.capped ? "More packages remain" : `${dependencies.direct.length} direct`}</small></div><div><span>Package entry points</span><strong>${entries.length.toLocaleString()}</strong><small>${manifest.exports ? "Published export paths" : "Legacy package entry"}</small></div><div><span>Package downloads</span><strong>${formatBytes(state.downloaded)}</strong><small>${state.demo ? "sample value" : "downloaded for this report"}</small></div></div>
     ${likelyNode ? `<div class="notice warning"><strong>△ Node imports found.</strong> ${externals.map(escapeHtml).join(", ")} are outside this browser bundle.</div>` : `<div class="notice success"><strong>✓ Browser bundle completed.</strong> ${externals.length ? `External package contracts: ${externals.map(escapeHtml).join(", ")}.` : "No Node built-ins or external package contracts were found in these paths."}</div>`}
@@ -291,7 +338,13 @@ document.addEventListener("click", (event) => {
   if (!link || event.defaultPrevented || event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
   const url = new URL(link.href); if (url.origin !== location.origin) return; event.preventDefault(); navigate(`${url.pathname}${url.search}`);
 });
-addEventListener("popstate", () => renderRoute(true));
+history.scrollRestoration = "manual";
+if (!history.state || typeof history.state !== "object") history.replaceState({ packageCostScrollX: window.scrollX, packageCostScrollY: window.scrollY } satisfies NavigationState, "");
+addEventListener("scroll", () => {
+  if (scrollFrame) cancelAnimationFrame(scrollFrame);
+  scrollFrame = requestAnimationFrame(() => { scrollFrame = 0; rememberScroll(); });
+}, { passive: true });
+window.addEventListener("popstate", (event: PopStateEvent) => renderRoute(true, historyPosition(event.state)));
 renderRoute(currentRoute() !== "home");
 
 if ("serviceWorker" in navigator && import.meta.env.PROD) addEventListener("load", () => {

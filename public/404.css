@@ -4,9 +4,10 @@ body { margin: 0; min-width: 320px; background: #d8d5cc; font-size: 16px; line-h
 .paper { width: min(1320px, 100%); min-height: 100vh; margin: auto; padding: 24px clamp(20px, 8vw, 120px); background: #f1efe8; border-block: 4px double #121513; }
 header { min-height: 64px; display: flex; align-items: center; justify-content: space-between; gap: 20px; border-bottom: 4px double #121513; }
 header a { color: #121513; font-size: 14px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; }
+.wordmark, header nav a, footer nav a, .actions a { min-width: 44px; min-height: 44px; display: inline-flex; align-items: center; }
 header nav, footer nav { display: flex; flex-wrap: wrap; gap: 16px; }
 header nav a { min-height: 44px; display: inline-flex; align-items: center; font-size: 12px; }
-.skip { position: fixed; z-index: 2; top: 8px; left: 8px; padding: 10px 14px; background: #121513; color: white; transform: translateY(-160%); }
+.skip { position: fixed; z-index: 2; top: 8px; left: 8px; min-width: 44px; min-height: 44px; display: inline-flex; align-items: center; padding: 10px 14px; background: #121513; color: white; transform: translateY(-160%); }
 .skip:focus { transform: translateY(0); }
 main { position: relative; min-height: 70vh; padding-block: clamp(70px, 12vw, 150px); overflow: hidden; }
 .code { position: absolute; z-index: 0; top: -120px; right: 0; margin: 0; color: #006f7a; font-family: Georgia, serif; font-size: clamp(220px, 40vw, 520px); line-height: 1; }
