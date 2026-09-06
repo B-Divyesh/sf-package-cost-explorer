@@ -1,11 +1,11 @@
 # Package cost explorer review 4 — keyboard access to package reports
 
-**Reviewed:** 2026-09-06  
-**Live URL:** https://package-cost-explorer.sociobot.in  
-**Implementation candidate:** `1f80fe8482a819103ab3323e74fd4ea7d1ee698a` (last product-code change)  
-**Documentation revision:** `ef9756724e59270007f16e601d40679eb4173585`  
-**Verdict:** **FAIL**  
-**Findings:** 1 minor  
+**Reviewed:** 2026-09-06
+**Live URL:** https://package-cost-explorer.sociobot.in
+**Implementation candidate:** `1f80fe8482a819103ab3323e74fd4ea7d1ee698a` (last product-code change)
+**Documentation revision:** `ef9756724e59270007f16e601d40679eb4173585`
+**Verdict:** **FAIL**
+**Findings:** 1 minor
 **Untested declared claims:** 0
 
 ## Job, audience, and first action
