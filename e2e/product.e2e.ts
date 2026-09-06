@@ -18,6 +18,21 @@ test("home is clear, keyboard-ready, and accessible", async ({ page }) => {
   expect(errors).toEqual([]);
 });
 
+test("skip link moves focus past the header on app routes and the static 404", async ({ page }) => {
+  for (const route of ["/", "/demo", "/privacy", "/terms", "/not-a-real-route", "/404.html"]) {
+    await test.step(route, async () => {
+      await page.goto(route);
+      const skipLink = page.getByRole("link", { name: "Skip to main content" });
+      await skipLink.focus();
+      await expect(skipLink).toBeFocused();
+      await page.keyboard.press("Enter");
+      await expect(page.locator("#main")).toBeFocused();
+      await page.keyboard.press("Tab");
+      expect(await page.evaluate(() => document.activeElement?.closest("main")?.id)).toBe("main");
+    });
+  }
+});
+
 test("demo, legal, and not-found routes have distinct metadata and accessible states", async ({ page }) => {
   for (const route of ["/demo", "/privacy", "/terms", "/not-a-real-route"]) {
     await page.goto(route);

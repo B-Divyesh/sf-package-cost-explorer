@@ -15,7 +15,6 @@ describe("static product contract", () => {
   it("renders a single explorer h1 and semantic landmarks", () => {
     const explorer = source.slice(source.indexOf("function renderHome"), source.indexOf("function seedDemo"));
     expect(explorer.match(/<h1\b/g)).toHaveLength(1);
-    expect(explorer).toContain('<main id="main">');
     expect(source).toContain('<header class="masthead">');
     expect(source).toContain('<footer class="footer">');
   });

@@ -116,7 +116,7 @@ function sharedExplorerSections(): string {
 
 function renderHome() {
   state.demo = false;
-  app.innerHTML = shell(`<main id="main"><section class="hero" aria-labelledby="page-title"><div class="hero-copy">
+  app.innerHTML = shell(`<main id="main" tabindex="-1"><section class="hero" aria-labelledby="page-title"><div class="hero-copy">
     <p class="kicker">npm package size checker</p><h1 id="page-title" tabindex="-1">Compare npm package costs before you install.</h1>
     <p class="lede">For frontend and Node developers choosing a dependency, see installed size and each entry point’s bundle size.</p>
     <div class="demo-cta"><a class="primary-button" href="/demo" data-route>Try it with sample data <span aria-hidden="true">→</span></a><span>Open a completed package report.</span></div>
@@ -133,7 +133,7 @@ function seedDemo() {
 
 function renderDemo() {
   seedDemo();
-  app.innerHTML = shell(`<main id="main"><section class="demo-intro" aria-labelledby="page-title"><div><p class="kicker">Completed sample / date-fns 4.1.0</p><h1 id="page-title" tabindex="-1">See a completed npm package report.</h1></div><p>This fixed sample shows installed size, package entry points, and bundle sizes. It makes no npm request.</p></section><section id="results" class="results" aria-labelledby="results-title"></section><aside id="offline-banner" class="offline-banner" role="status" hidden><strong>You are offline.</strong> The sample report remains available.</aside><aside id="update-toast" class="update-toast" hidden role="status"><span>An update is ready.</span><button id="reload-update" class="quiet-button" type="button">Reload page</button></aside></main>`, true);
+  app.innerHTML = shell(`<main id="main" tabindex="-1"><section class="demo-intro" aria-labelledby="page-title"><div><p class="kicker">Completed sample / date-fns 4.1.0</p><h1 id="page-title" tabindex="-1">See a completed npm package report.</h1></div><p>This fixed sample shows installed size, package entry points, and bundle sizes. It makes no npm request.</p></section><section id="results" class="results" aria-labelledby="results-title"></section><aside id="offline-banner" class="offline-banner" role="status" hidden><strong>You are offline.</strong> The sample report remains available.</aside><aside id="update-toast" class="update-toast" hidden role="status"><span>An update is ready.</span><button id="reload-update" class="quiet-button" type="button">Reload page</button></aside></main>`, true);
   bindOnlineState();
   bindDemoControls();
   renderResults(false);
@@ -141,13 +141,13 @@ function renderDemo() {
 
 function renderLegal(kind: "privacy" | "terms") {
   const privacy = kind === "privacy";
-  app.innerHTML = shell(`<main id="main" class="legal-page"><p class="kicker">Policy desk / Effective 28 August 2026</p><h1 tabindex="-1">${privacy ? "Privacy in plain words." : "Terms of use."}</h1>
+  app.innerHTML = shell(`<main id="main" class="legal-page" tabindex="-1"><p class="kicker">Policy desk / Effective 28 August 2026</p><h1 tabindex="-1">${privacy ? "Privacy in plain words." : "Terms of use."}</h1>
     ${privacy ? `<p class="lede">Package Cost Explorer uses no account, payment, analytics, tracking cookies, or saved reports.</p><h2>Real package measurements</h2><p>When you measure a real package, your browser requests public package details and files directly from npm. npm may record those requests under its own privacy terms.</p><h2>Sample report</h2><p>The demo uses fixed sample data. It does not contact npm or read or write browser storage.</p><h2>Offline page</h2><p>After one visit, a service worker caches the interface so it can reload offline. A new real measurement still needs npm.</p><h2>Your control</h2><p>Clear this site’s storage to remove the cached interface. Shared result URLs include a public package name and version.</p>` : `<p class="lede">Package Cost Explorer provides estimates for dependency choices. Confirm important figures in your own application build.</p><h2>What the estimate covers</h2><p>The report measures published JavaScript for a browser target. Build settings, shared code, package changes, and network failures can change a result.</p><h2>What you must check</h2><p>Review package licenses, security, and suitability yourself. Do not use this site to overload npm or inspect private packages.</p><h2>No warranty</h2><p>The software is provided “as is,” without warranty. The repository license governs reuse of the source code.</p>`}
     <p><a class="text-link" href="/" data-route>← Return to package measurement</a></p></main>`);
 }
 
 function renderNotFound() {
-  app.innerHTML = shell(`<main id="main" class="not-found"><p class="error-code" aria-hidden="true">404</p><p class="kicker">Misfiled package page</p><h1 tabindex="-1">This package page does not exist.</h1><p>The address may be incomplete or out of date.</p><div class="not-found-actions"><a class="primary-button" href="/" data-route>Return home</a><a class="text-link" href="/demo" data-route>Open the sample report</a></div></main>`);
+  app.innerHTML = shell(`<main id="main" class="not-found" tabindex="-1"><p class="error-code" aria-hidden="true">404</p><p class="kicker">Misfiled package page</p><h1 tabindex="-1">This package page does not exist.</h1><p>The address may be incomplete or out of date.</p><div class="not-found-actions"><a class="primary-button" href="/" data-route>Return home</a><a class="text-link" href="/demo" data-route>Open the sample report</a></div></main>`);
 }
 
 function renderRoute(focusHeading = false) {
